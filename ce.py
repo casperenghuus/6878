@@ -9,8 +9,6 @@ CWD = os.getcwd()
 def read_Loayza():
 	'''Load data from Loayza paper into DataFrame'''
 	f = os.path.join(CWD, f_Loayza)
-
-	handle = subprocess.Popen(command, shell=True)
 	df = pd.read_table(f)
 	return df
 
