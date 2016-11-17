@@ -12,6 +12,10 @@ def read_Loayza():
 	'''Load data from Loayza paper into DataFrame'''
 	f = os.path.join(CWD, f_Loayza)
 	df = pd.read_table(f)
+	cols = list(df.columns.values)
+	# Switch column 1 and 2
+	cols2 = [cols[1], cols[0]] + cols[2:]
+	df = df[cols2]
 	return df
 
 def heatmap(df, fn, L=None):
@@ -38,6 +42,10 @@ def heatmap(df, fn, L=None):
 	plt.savefig(fn)
 
 df = read_Loayza()
-heatmap(df.drop(['enstxids'], axis=1), 'heatmap.png', 100)
+df.to_csv('data/GSE42509_PQST_rna_rp_fpkms_c0c1switch.txt', '\t', index=False)
+
+
+# Plot heatmap
+# heatmap(df.drop(['enstxids'], axis=1), 'heatmap.png', 100)
 
 
