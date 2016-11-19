@@ -1,6 +1,7 @@
 # Tasks
 ## A
 - Bi-partite clustering (Casper)
+    - Extract the individual clusters
 - Multi-layer clustering (JC)
 
 ## B
@@ -12,6 +13,7 @@
 
 ## Done
 - Swap labels (Casper)
+- Bi-partite (and also co-clustering) has been implemented. Current output is a heatmap of the matrix sorted by clusters.
 
 # Main goals
 ## Re-run their algorithm
@@ -39,5 +41,6 @@ Stuck because it’s super slow, might reduce network size more
 - Read up on what Fortunato did, see the supplement information
 
 ## Visualization
+- Sort rows in matrix by clusters and plot as heatmap
 
 ## Improve existing pipeline
