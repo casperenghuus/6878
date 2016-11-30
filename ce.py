@@ -2,6 +2,10 @@
 
 import os
 import re
+import random
+import pygraphviz
+from networkx.drawing.nx_agraph import graphviz_layout
+import networkx as nx
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +24,8 @@ f_Astrocytes = 'data/GSE58910_SenescentAstrocytesDEanalysis_v2.csv'
 f_Arachne = [
     'data/net_tf_final.txt',
     'data/net_mirna_final.txt',
-    'data/net_exp_final.txt'
+    'data/net_exp_final.txt',
+    'data/nodes.txt'
     ]
 f_jenage = [
     'data/GSE63577_counts_rpkm_exvivo_jenage_data.txt',
@@ -81,17 +86,79 @@ def read_arachne(single_df=False):
     f1 = os.path.join(CWD, f_Arachne[0])
     f2 = os.path.join(CWD, f_Arachne[1])
     f3 = os.path.join(CWD, f_Arachne[2])
+    f4 = os.path.join(CWD, f_Arachne[3])
 
     # Column names
-    colnames = ['a', 'b', 'c']
+    colnames = ['node1', 'node2', 'edge']
 
     # Read to dataframe
     df1 = pd.read_table(f1, sep=' ', header=None, names=colnames)
     df2 = pd.read_table(f2, sep=' ', header=None, names=colnames)
     df3 = pd.read_table(f3, sep=' ', header=None, names=colnames)
+    df4 = pd.read_table(f4, header=None, names=['sym','a','b'])
+    df4 = df4.drop(['a','b'], axis=1)
+
+    # Add column to hold node-symbol index. No offset
+    # df4['id'] = df4.index
+    # Add column to hold node-symbol index. Offset by 1
+    df4['id'] = df4.index + 1
+
+    df = {'tf':df1, 'mirna':df2, 'exp':df3, 'nodes':df4}
 
     # Return dict of dataframes
-    return {'tf':df1, 'mirna':df2, 'exp':df3}
+    return df
+
+def arachne_clusters(df):
+    '''Identify clusters by edges'''
+
+    # If values are 1 indexed and not 0 indexed
+    offset = 1
+
+    # Convert dataframe to list of tuples holding node pairs
+    subset = df[['node1', 'node2']]
+    tuples = [tuple(x) for x in subset.values]
+
+    # Identify clusters by edges
+    G = nx.Graph()
+    G.add_edges_from(tuples)
+    clusters = []
+    for connected_component in nx.connected_components(G):
+        clusters.append(connected_component)
+
+    # Number of unique nodes
+    uniq_nodes = pd.concat([dfAra['exp'].node1, dfAra['exp'].node2])
+    n_nodes = uniq_nodes.unique().shape[0]
+    max_node = uniq_nodes.max() + offset
+
+    # Matrix to hold clusters
+    M = np.zeros([max_node, len(clusters)])
+    for j in xrange(len(clusters)):
+        for i in clusters[j]:
+            M[i,j] = 1
+
+    # Remove rows that only contain 0 values
+    M = M[~np.all(M == 0, axis=1)]
+
+    # Plot graph colored by subgraphs
+    plt.figure(figsize=(10,10))
+    pos = graphviz_layout(G, prog="neato")
+    subG = nx.connected_component_subgraphs(G)
+    for g in subG:
+        # Random color. List of length = # of nodes
+        c = [random.random()] * nx.number_of_nodes(g)
+        nx.draw(
+            g,
+            pos,
+            node_size=30,
+            node_color=c,
+            cmap=plt.cm.Spectral,
+            # vmin,max used to set colormap
+            vmin=0.0,
+            vmax=1.0)
+    plt.savefig(plot_folder + 'Arachne.png')
+    plt.clf(); # Clear all plots
+    # Return list of clusters. Each cluster is a set
+    return clusters
 
 def read_hoare(load, fetch_sym):
     '''
@@ -327,11 +394,12 @@ if __name__=='__main__':
     # Hard-coded choice of analyses/dataframes to load
     loayza = False
     hoare = False
-    jenage = True
-    arachne = False
+    jenage = False
+    arachne = True
     astrocytes = False
     L_analysis = False
     HL_analysis = False
+    AL_analysis = False
 
     if jenage:
         dfJ = read_jenage()
@@ -344,6 +412,7 @@ if __name__=='__main__':
     if arachne:
         # Returns dict of dataframes with values 'tf', 'mirna' and 'exp'
         dfAra = read_arachne()
+        dfAra_m = arachne_clusters(dfAra['exp'])
 
     if astrocytes:
         dfA = read_Astrocytes()
@@ -459,6 +528,60 @@ if __name__=='__main__':
         # Compare bi-/co-clustered networks by Jaccard index
         jaccard_consensus(bc_model.biclusters_, cc_model.biclusters_)
 
+    if AL_analysis:
+        # Log-transformed columns
+        prefix = 'ln_'
+
+        row_idx = dfL['sym']
+        col_idx = [col for col in dfL.columns if 'ln_' in col]
+
+        data = dfL[col_idx].as_matrix()
+        data[data==0] = 0.001 # Clustering does not accept zeros
+
+        # Comparison of control experiments
+        xy_linregress_plot(
+            dfL[['C12.rna', 'C3.rna']],
+            'C12.rna',
+            'C3.rna',
+            'Loyaza C12 vs. C3 RNA-Seq',
+            'loayza_C12,3_rna.png')
+        xy_linregress_plot(
+            dfL[['C12.rp', 'C3.rp']],
+            'C12.rp',
+            'C3.rp',
+            'Loyaza C12 vs. C3 Ribo-Seq',
+            'loayza_C12,3_rp.png')
+
+        # Bi- and Co-clustering
+        bc_model, bc_fit, bc_idx = Spectral_BiClustering(
+            data, row_idx, col_idx, len(col_idx))
+        cc_model, cc_fit, cc_idx = Spectral_CoClustering(
+            data, row_idx, col_idx, len(col_idx))
+
+        # HEATMAPS:
+        # Heatmap of original data
+        plot_spectral(
+            {'data':data,'x':col_idx,'y':row_idx},
+            {'title':'L: Original Data',
+                'filename':prefix+'L_original_data.png'},
+            {'size':(10,20)})
+
+        # Heatmap of biclustered data
+        plot_spectral(
+            {'data':bc_fit,'x':bc_idx[1],'y':bc_idx[0]},
+            {'title':"L: After biclustering; rearranged to show biclusters",
+                'filename':prefix+'L_bipartite_clustering.png'},
+            {'size':(10,20)})
+
+        # Heatmap of coclustered data
+        plot_spectral(
+            {'data':cc_fit,'x':cc_idx[1],'y':cc_idx[0]},
+            {'title':"L: After coclustering; rearranged to show coclusters",
+                'filename':prefix+'L_co_clustering.png'},
+            {'size':(10,20)})
+
+        # Compare bi-/co-clustered networks by Jaccard index
+        jaccard_consensus(bc_model.biclusters_, cc_model.biclusters_)
 
     # DEPRECATED COMMANDS:
 
