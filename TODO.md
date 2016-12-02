@@ -3,13 +3,16 @@
 - Bi-partite clustering (Casper)
     - Extract the individual clusters
     - Does it work as multi-clustering?
+- Filter the data (Casper)
 
+- Conductance calculation (JC)
+  - SNAP/igraph?
 - Higher order consensus (JC)
+- Visualization (igraph) (JC)
 
 ## B
 
 ## C
-- Vizualization
 
 ## Done
 - Swap labels (Casper)
