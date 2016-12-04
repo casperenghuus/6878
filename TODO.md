@@ -2,18 +2,25 @@
 ## A
 - Bi-partite clustering (Casper)
     - Extract the individual clusters
-- Multi-layer clustering (JC)
+    - Does it work as multi-clustering?
+- Filter the data (Casper)
+
+- Conductance calculation (JC)
+  - SNAP/igraph?
+- Higher order consensus (JC)
+- Visualization (igraph) (JC)
 
 ## B
-- Higher order consensus
 
 ## C
-- Vizualization
-- Parallelize some of the Fortunato code
 
 ## Done
 - Swap labels (Casper)
 - Bi-partite (and also co-clustering) has been implemented. Current output is a heatmap of the matrix sorted by clusters.
+- Reimplement filtering (still not super fast)
+- Reimplement enrichment analysis
+- Multi-layer clustering (JC)
+- Parallelize some of the Fortunato code
 
 # Main goals
 ## Re-run their algorithm
