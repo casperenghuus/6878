@@ -5,7 +5,8 @@ from __future__ import print_function
 import argparse
 import os
 
-outfolder = 'data/MultiClusterTensor'
+outfolder = '../data/MultiClusterTensor'
+# print(outfolder)
 if not os.path.exists(outfolder):
     os.makedirs(outfolder)
 
@@ -42,6 +43,7 @@ for i in range(scount):
     for k in slices[i]:
         nodes.add(k[0])
         nodes.add(k[1])
+# print(nodes)
 
 ind2node = { i + 1 + scount: node for (i, node) in enumerate(nodes) }
 node2ind = {}

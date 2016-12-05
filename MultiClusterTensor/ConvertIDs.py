@@ -37,9 +37,9 @@ for line in ns.slices:
 ns.slices.close()
 
 for line in ns.clusters:
+    line = line.strip('\n')
     if line.startswith('#'):
-        ns.out.write(line)
-
+        ns.out.write(line+'\n')
     else:
         ns.out.write(" ".join([conv[s] for s in line.split()]) + "\n")
 ns.clusters.close()
