@@ -2,6 +2,7 @@
 
 import graph_tool.all as grat
 import ClusteringUtils as cu
+import argparse
 from scipy import integrate
 
 def compute_sig(g):
@@ -43,16 +44,23 @@ def extract_backbone(g, alpha):
 
     return backbone
 
-ut = cu.Utils()
+parser = argparse.ArgumentParser(description = 'Parse input network files')
+parser.add_argument('edgelist', help = 'filename of the network file',
+        type = str)
+parser.add_argument('dotfile', help = 'filename of temporary storage',
+        type = str)
+parser.add_argument('prefix', help = 'filename prefix of output',
+        type = str)
+
+ns = parser.parse_args()
 # nxfname = "./Filtering/net_exp_unique_nodes_int.txt"
-nxfname = "./Filtering/shortened.txt"
-dotfname = "./Filtering/net_exp_unique_nodes_int.dot"
-ut.edge2dot(nxfname, dotfname)
+nxfname = ns.edgelist
+dotfname = ns.dotfile
+cu.edge2dot(nxfname, dotfname)
 g = grat.load_graph(dotfname)
 compute_sig(g)
 
 vet=[0.005,0.01,0.02,0.03,0.05,0.1,0.2,0.3,0.4,0.5]
 
 for i,alpha in enumerate(vet):
-    # ut.writeEdgeFile(extract_backbone(g, alpha), "./temp/test.edgelist_exp" + str(i) + ".txt")
-    ut.writeEdgeFile(extract_backbone(g, alpha), "./Filtering/test.edgelist_exp" + str(i) + ".txt")
+    cu.writeEdgeFile(extract_backbone(g, alpha), ns.prefix + str(i) + ".txt")
