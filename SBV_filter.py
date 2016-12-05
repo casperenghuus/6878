@@ -19,7 +19,6 @@ def compute_sig(g):
        k_n = v.degree()
        if k_n > 1:
            conn_edges = g.es[g.incident(v, mode = ig.ALL)]
-           print(conn_edges)
            sum_w = sum(float(e['weight']) for e in conn_edges)
            for e in conn_edges:
                edgeWeight = float(e['weight'])
