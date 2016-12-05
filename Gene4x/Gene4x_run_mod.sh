@@ -1,37 +1,37 @@
 #!/bin/bash
-#networks reconstruction
-echo -n "You are running Gene4x"
-echo -n "Multiplex reconstruction... "
-mkdir temp
-echo -n "Enter the path to the mRNA dataset file > "
-read text1
-./ARACNE/aracne2 -i $text1 -o exp_net.adj -H ./ARACNE
-awk 'NR>=18' ./exp_net.adj > ./exp_net_1.txt
-perl ./code/conversion_network1.pl -g1 exp_net_1.txt -g2 exp_net.txt 
-rm exp_net.adj
-rm exp_net_1.txt
-cp exp_net.txt ./temp/
-#nodes selection
-cat  $text1 | awk '{ print $1 }' > ./temp/exp1.txt
-awk 'NR>=2' ./temp/exp1.txt > ./temp/exp.txt
-rm ./temp/exp1.txt
-split -l $(( $( wc -l < ./temp/exp_net.txt ) / 2 + 1 )) ./temp/exp_net.txt ./temp/exp_net.txt
-mv ./temp/exp_net.txtaa ./temp/exp_net_primaparte.txt
-mv ./temp/exp_net.txtab ./temp/exp_net_secondaparte.txt
-Rscript ./code/unique_nodes.R
-cat ./temp/net_exp_unique_nodes_primaparte.txt ./temp/net_exp_unique_nodes_secondaparte.txt > ./temp/net_exp_unique_nodes.txt
-#integer conversion
-Rscript ./code/conversion_integer_exp.R
-Rscript ./code/conversion_integer_ppi.R
-Rscript ./code/conversion_integer_mirna.R
-Rscript ./code/conversion_integer_tf.R
-sed -i 's/"//g' ./temp/net_*_unique_nodes_int.txt
-echo -n "Multiplex reconstruction finished "
-# #filtering
-# echo -n "Layers filtering... "
-# python ../SBV_filter.py "./temp/net_exp_unique_nodes_int.txt" "./temp/prefilter_exp.dot" "./temp/test.edgelist_exp"
-# python ../SBV_filter.py "./temp/net_tf_unique_nodes_int.txt" "./temp/prefilter_tf.dot" "./temp/test.edgelist_tf"
-# python ../SBV_filter.py "./temp/net_mirna_unique_nodes_int.txt" "./temp/prefilter_mirna.dot" "./temp/test.edgelist_mirna"
+# #networks reconstruction
+# echo -n "You are running Gene4x"
+# echo -n "Multiplex reconstruction... "
+# mkdir temp
+# echo -n "Enter the path to the mRNA dataset file > "
+# read text1
+# ./ARACNE/aracne2 -i $text1 -o exp_net.adj -H ./ARACNE
+# awk 'NR>=18' ./exp_net.adj > ./exp_net_1.txt
+# perl ./code/conversion_network1.pl -g1 exp_net_1.txt -g2 exp_net.txt 
+# rm exp_net.adj
+# rm exp_net_1.txt
+# cp exp_net.txt ./temp/
+# #nodes selection
+# cat  $text1 | awk '{ print $1 }' > ./temp/exp1.txt
+# awk 'NR>=2' ./temp/exp1.txt > ./temp/exp.txt
+# rm ./temp/exp1.txt
+# split -l $(( $( wc -l < ./temp/exp_net.txt ) / 2 + 1 )) ./temp/exp_net.txt ./temp/exp_net.txt
+# mv ./temp/exp_net.txtaa ./temp/exp_net_primaparte.txt
+# mv ./temp/exp_net.txtab ./temp/exp_net_secondaparte.txt
+# Rscript ./code/unique_nodes.R
+# cat ./temp/net_exp_unique_nodes_primaparte.txt ./temp/net_exp_unique_nodes_secondaparte.txt > ./temp/net_exp_unique_nodes.txt
+# #integer conversion
+# Rscript ./code/conversion_integer_exp.R
+# Rscript ./code/conversion_integer_ppi.R
+# Rscript ./code/conversion_integer_mirna.R
+# Rscript ./code/conversion_integer_tf.R
+# sed -i 's/"//g' ./temp/net_*_unique_nodes_int.txt
+# echo -n "Multiplex reconstruction finished "
+#filtering
+echo -n "Layers filtering... "
+python ../SBV_filter.py "./temp/net_exp_unique_nodes_int.txt" "./temp/prefilter_exp.dot" "./temp/test.edgelist_exp"
+python ../SBV_filter.py "./temp/net_tf_unique_nodes_int.txt" "./temp/prefilter_tf.dot" "./temp/test.edgelist_tf"
+python ../SBV_filter.py "./temp/net_mirna_unique_nodes_int.txt" "./temp/prefilter_mirna.dot" "./temp/test.edgelist_mirna"
 # Rscript ./code/SBV_threshold_exp.R
 # Rscript ./code/SBV_threshold_mirna.R
 # Rscript ./code/SBV_threshold_tf.R
