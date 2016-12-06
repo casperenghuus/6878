@@ -46,6 +46,7 @@ ns = parser.parse_args()
 # dotfname = ns.dotfile
 # cu.edge2dot(nxfname, dotfname)
 g = ig.Graph().Read_Ncol(ns.edgelist, directed = False)
+g.simplify(combine_edges = 'first')
 compute_sig(g)
 
 vet=[0.005,0.01,0.02,0.03,0.05,0.1,0.2,0.3,0.4,0.5]

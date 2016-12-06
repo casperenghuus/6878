@@ -2,6 +2,8 @@ import re
 import scipy.stats as stats
 import numpy as np
 import time
+import igraph as ig
+import itertools
 
 ind2node = {}
 node2ind = {}
@@ -93,3 +95,16 @@ def enrichmentTest(confNodes, confEdges, testNodes, testEdges):
     (_, p) = stats.fisher_exact(table, alternative = 'greater')
     return p
 
+def ncol2metis(infile, metisfile, nodefile):
+    g = ig.Graph().Read_Ncol(infile)
+    with open(metisfile, 'w') as f, open(nodefile, 'w') as nf:
+        f.write('{} {} 001\n'.format(len(g.vs), len(g.es)))
+        for v in g.vs:
+            nf.write('{} {}\n'.format(v.index + 1, v['name']))
+            neighbor_inds = [str(w.index + 1) for w in v.neighbors()]
+            edge_weights = [str(g.es[e]['weight']) for e in g.incident(v)]
+            seq = itertools.chain.from_iterable(zip(neighbor_inds, edge_weights))
+            print(neighbor_inds)
+            print(v.neighbors())
+            print(edge_weights)
+            f.write(' '.join(seq) + '\n')
