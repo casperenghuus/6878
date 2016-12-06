@@ -27,15 +27,15 @@
 # Rscript ./code/conversion_integer_tf.R
 # sed -i 's/"//g' ./temp/net_*_unique_nodes_int.txt
 # echo -n "Multiplex reconstruction finished "
-#filtering
-echo -n "Layers filtering... "
-python ../SBV_filter.py "./temp/net_exp_unique_nodes_int.txt" "./temp/prefilter_exp.dot" "./temp/test.edgelist_exp"
-python ../SBV_filter.py "./temp/net_tf_unique_nodes_int.txt" "./temp/prefilter_tf.dot" "./temp/test.edgelist_tf"
-python ../SBV_filter.py "./temp/net_mirna_unique_nodes_int.txt" "./temp/prefilter_mirna.dot" "./temp/test.edgelist_mirna"
-# Rscript ./code/SBV_threshold_exp.R
-# Rscript ./code/SBV_threshold_mirna.R
-# Rscript ./code/SBV_threshold_tf.R
-# echo -n "Layers filtering... finished"
+# #filtering
+# echo -n "Layers filtering... "
+# python ../SBV_filter.py "./temp/net_exp_unique_nodes_int.txt" "./temp/prefilter_exp.dot" "./temp/test.edgelist_exp"
+# python ../SBV_filter.py "./temp/net_tf_unique_nodes_int.txt" "./temp/prefilter_tf.dot" "./temp/test.edgelist_tf"
+# python ../SBV_filter.py "./temp/net_mirna_unique_nodes_int.txt" "./temp/prefilter_mirna.dot" "./temp/test.edgelist_mirna"
+python ../Enrichment.py --prefix "./temp/test.edgelist_exp" --outfile "./temp/selection_links_EXP.txt" --dbfolder "../data/Reference" --nodes "./temp/nodes.txt"
+python ../Enrichment.py --prefix "./temp/test.edgelist_tf" --outfile "./temp/selection_links_TF.txt" --dbfolder "../data/Reference" --nodes "./temp/nodes.txt"
+python ../Enrichment.py --prefix "./temp/test.edgelist_mirna" --outfile "./temp/selection_links_MIRNA.txt" --dbfolder "../data/Reference" --nodes "./temp/nodes.txt"
+echo -n "Layers filtering... finished"
 # echo -n "Enter the integer corrisponding to the optimal alpha value for the expression network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
 # read alpha_exp
 # echo -n "Enter the integer corrisponding to the optimal alpha value for the transcription factor co-taregting network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
