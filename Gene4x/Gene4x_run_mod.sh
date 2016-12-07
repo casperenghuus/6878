@@ -18,7 +18,7 @@ rm ./temp/exp1.txt
 split -l $(( $( wc -l < ./temp/exp_net.txt ) / 2 + 1 )) ./temp/exp_net.txt ./temp/exp_net.txt
 mv ./temp/exp_net.txtaa ./temp/exp_net_primaparte.txt
 mv ./temp/exp_net.txtab ./temp/exp_net_secondaparte.txt
-Rscript ./code/unique_nodes.R
+Rscript ./code/unique_nodes_mod.R
 cat ./temp/net_exp_unique_nodes_primaparte.txt ./temp/net_exp_unique_nodes_secondaparte.txt > ./temp/net_exp_unique_nodes.txt
 #integer conversion
 Rscript ./code/conversion_integer_exp.R

@@ -2,12 +2,12 @@
 library('GAnet')
 ##########
 combined_db<-as.matrix(ganet.combine(BIOGRID=1,HPRD=1,INTACT=1,MINT=1,Bci=0,UNIHI=0,IMID=1,CELL=1,NAT=1,REACT=1))
-p2<-numeric(0)
-link<-numeric(0)
-nodes<-numeric(0)
-density<-numeric(0)
-for(i in 0:0){
-    #print(i)
+p2<-numeric(1)
+link<-numeric(1)
+nodes<-numeric(1)
+density<-numeric(1)
+for(i in 1:9){
+    print(i)
     net_new<-as.matrix(read.delim(paste('./temp/test.edgelist_exp',i,'.txt',sep=''),sep=' ',header=FALSE))
     net_new<-as.matrix(net_new)
     link<-rbind(link,dim(net_new)[1])

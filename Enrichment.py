@@ -14,9 +14,9 @@ parser.add_argument('--dbfolder', help = 'folder containing the database files',
         type = str)
 parser.add_argument('--nodes', help = 'file to identify the nodes',
         type = str)
+ns = parser.parse_args()
 
 t0 = time.time()
-ns = parser.parse_args()
 # Read in nodes file
 with open(ns.nodes) as nodeFile:
     cu.loadNodes(nodeFile)
@@ -52,24 +52,13 @@ for i in range(10):
     
         p = cu.enrichmentTest(confNodes, confEdges, expNodes, expEdges)
         
-        # # Filter database
-        # focusedSet = set([(a, b) for (a, b) in confEdges if a in expNodes and b in expNodes])
-        
-        # # Fisher test
+        # Fisher test
         nPredicted =len(expEdges)
-        # nOverlap = len(expEdges.intersection(focusedSet))
-        # nFocusedSet = len(focusedSet)
         nodes = len(expNodes)
         nUniverse = nodes * (nodes - 1) / 2
         linksizes.append(nPredicted)
         nodesizes.append(len(expNodes))
         densities.append(float(nPredicted)/nUniverse)
-        # fe1 = nOverlap
-        # fe2 = nPredicted - nOverlap
-        # fe3 = nFocusedSet - nOverlap
-        # fe4 = nUniverse - nPredicted - nFocusedSet + nOverlap 
-        # table = np.array([[fe1, fe2], [fe3, fe4]])
-        # (_, p) = stats.fisher_exact(table, alternative = 'greater')
         pvals.append(p)
     except pd.io.common.EmptyDataError:
         nodesizes.append(0)

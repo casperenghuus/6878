@@ -4,6 +4,8 @@ import numpy as np
 import time
 import igraph as ig
 import itertools
+import pandas as pd
+import os
 
 ind2node = {}
 node2ind = {}
@@ -22,11 +24,17 @@ def loadNodes(nodeFile):
 
 def convertToNodes(df):
     """ Convert string entries in data frame to indices """
-    return df.applymap(lambda x: ind2node[x])
+    if isinstance(df, pd.DataFrame):
+        return df.applymap(lambda x: ind2node[x])
+    else:
+        return map(lambda x: ind2node[int(x)], df)
 
 def convertToInds(df):
     """ Convert indices in data frame to strings """
-    return df.applymap(lambda x: node2ind[x])
+    if isinstance(df, pd.DataFrame):
+        return df.applymap(lambda x: node2ind[x])
+    else:
+        return map(lambda x: node2ind[x], df)
 
 def sortedTuples(s):
     """ Sort the tuples in the given set """
@@ -95,16 +103,50 @@ def enrichmentTest(confNodes, confEdges, testNodes, testEdges):
     (_, p) = stats.fisher_exact(table, alternative = 'greater')
     return p
 
-def ncol2metis(infile, metisfile, nodefile):
-    g = ig.Graph().Read_Ncol(infile)
+def ncol2metis(infile, metisfile, nodefile, prefactor = 1e5):
+    g = ig.Graph().Read_Ncol(infile, directed = False)
     with open(metisfile, 'w') as f, open(nodefile, 'w') as nf:
         f.write('{} {} 001\n'.format(len(g.vs), len(g.es)))
         for v in g.vs:
             nf.write('{} {}\n'.format(v.index + 1, v['name']))
             neighbor_inds = [str(w.index + 1) for w in v.neighbors()]
-            edge_weights = [str(g.es[e]['weight']) for e in g.incident(v)]
+            edge_weights = [str(int(prefactor * float(g.es[e]['weight']))) for e in g.incident(v)]
             seq = itertools.chain.from_iterable(zip(neighbor_inds, edge_weights))
-            print(neighbor_inds)
-            print(v.neighbors())
-            print(edge_weights)
             f.write(' '.join(seq) + '\n')
+
+def readComms(fname):
+    membership = {}
+    clusters = []
+    counter = 0
+    with open(fname, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith('#'):
+                cluster = []
+                clusters.append(cluster)
+                for node in line.split(' '):
+                    if not node.startswith('slice'):
+                        membership[node] = counter
+                        cluster.append(node)
+                counter += 1
+    return (membership, clusters)
+
+def readMSig(prefix, files):
+    if not hasattr(files, '__iter__'):
+        files = [files]
+
+    ret = {} 
+
+    for fname in files:
+        ret[fname] = {}
+        with open(os.path.join(prefix, fname + '.gmt')) as f:
+            for line in f:
+                if line:
+                    line = line.strip()
+                    content = line.split('\t')
+                    ret[fname][content[0]] = content[2:]
+
+    return ret
+
+def comms2nodes(clusters):
+    return [convertToNodes(c) for c in clusters]

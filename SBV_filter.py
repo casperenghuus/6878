@@ -52,7 +52,8 @@ compute_sig(g)
 vet=[0.005,0.01,0.02,0.03,0.05,0.1,0.2,0.3,0.4,0.5]
 
 for i,alpha in enumerate(vet):
-    cu.writeEdgeFileIG(extract_backbone(g, alpha), ns.prefix + str(i) + ".txt")
+    # cu.writeEdgeFileIG(extract_backbone(g, alpha), ns.prefix + str(i) + ".txt")
+    extract_backbone(g, alpha).write_ncol(ns.prefix + str(i) + ".txt")
 
 t1 = time.time()
 print('Time for filtering {}: {} minutes'.format(ns.edgelist, (t1-t0)/60))
