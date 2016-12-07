@@ -193,7 +193,7 @@ def run_all(runs, folder_name, program_number, netfile, label_file, threshold, r
     time.sleep(2)
     
     
-    Parallel(n_jobs = 2)(delayed(run_method_given_folder_and_network)(folder_name, program_number, str(k+1), str(k+1)) for k in range(runs))
+    Parallel(n_jobs = 1)(delayed(run_method_given_folder_and_network)(folder_name, program_number, str(k+1), str(k+1)) for k in range(runs))
     #for k in range(runs):
         #run_method_given_folder_and_network(folder_name, program_number, str(k+1), str(k+1))
         #print 'run ', k+1, 'done!'
