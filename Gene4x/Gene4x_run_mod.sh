@@ -36,31 +36,31 @@ python ../Enrichment.py --prefix "./temp/test.edgelist_exp" --outfile "./temp/se
 python ../Enrichment.py --prefix "./temp/test.edgelist_tf" --outfile "./temp/selection_links_TF.txt" --dbfolder "../data/Reference" --nodes "./temp/nodes.txt"
 python ../Enrichment.py --prefix "./temp/test.edgelist_mirna" --outfile "./temp/selection_links_MIRNA.txt" --dbfolder "../data/Reference" --nodes "./temp/nodes.txt"
 echo -n "Layers filtering... finished"
-# echo -n "Enter the integer corrisponding to the optimal alpha value for the expression network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
-# read alpha_exp
-# echo -n "Enter the integer corrisponding to the optimal alpha value for the transcription factor co-taregting network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
-# read alpha_tf
-# echo -n "Enter the integer corrisponding to the optimal alpha value for the microRNA co-taregting network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
-# read alpha_mirna
-# sed -i "s/{'weight': //g" "./temp/test.edgelist_exp"$alpha_exp".txt" 
-# sed -i "s/{'weight': //g" "./temp/test.edgelist_tf"$alpha_tf".txt" 
-# sed -i "s/{'weight': //g" "./temp/test.edgelist_mirna"$alpha_mirna".txt" 
-# sed  "s/}//g" "./temp/test.edgelist_exp"$alpha_exp".txt" > "./temp/net_exp_final.txt"
-# sed  "s/}//g" "./temp/test.edgelist_tf"$alpha_tf".txt" > "./temp/net_tf_final.txt"
-# sed  "s/}//g" "./temp/test.edgelist_mirna"$alpha_mirna".txt"  > "./temp/net_mirna_final.txt"
+echo -n "Enter the integer corrisponding to the optimal alpha value for the expression network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
+read alpha_exp
+echo -n "Enter the integer corrisponding to the optimal alpha value for the transcription factor co-taregting network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
+read alpha_tf
+echo -n "Enter the integer corrisponding to the optimal alpha value for the microRNA co-taregting network (0=0.005,1=0.01,2=0.02,3=0.03,4=0.05,5=0.1,6=0.2,7=0.3,8=0.4,9=0.5)> "
+read alpha_mirna
+sed -i "s/{'weight': //g" "./temp/test.edgelist_exp"$alpha_exp".txt" 
+sed -i "s/{'weight': //g" "./temp/test.edgelist_tf"$alpha_tf".txt" 
+sed -i "s/{'weight': //g" "./temp/test.edgelist_mirna"$alpha_mirna".txt" 
+sed  "s/}//g" "./temp/test.edgelist_exp"$alpha_exp".txt" > "./temp/net_exp_final.txt"
+sed  "s/}//g" "./temp/test.edgelist_tf"$alpha_tf".txt" > "./temp/net_tf_final.txt"
+sed  "s/}//g" "./temp/test.edgelist_mirna"$alpha_mirna".txt"  > "./temp/net_mirna_final.txt"
 # rm ./temp/test.edgelist*.txt
-# printf '%s\n' "../temp/net_exp_final.txt" "../temp/net_tf_final.txt" "../temp/net_mirna_final.txt" "../temp/net_ppi_unique_nodes_int.txt" >> ./temp/slice.txt
-# #consensus clustering
-# echo -n "Community detection... "
-# echo -n "Enter the enter the algorithm you want to use for network clustering (0: oslom undirected, 2: infomap undirected, 4: louvain, 5: label propagation method, 8: modularity optimization)> "
-# read alg
-# cd clustering_programs_5_2
-# python select.py -slices ../temp/slice.txt -p $alg -f ../temp/slice_out -c 100
-# cp ../temp/slice_out/results_consensus/tp ../temp/
-# cd ..
-# awk 'NR%2==0' temp/tp > temp/comm.txt
-# awk 'NF>=4' temp/comm.txt > temp/comm_filt.txt
-# sed -i 's/ /	/g' temp/comm_filt.txt
-# Rscript ./code/conversion_communities.R
+printf '%s\n' "../temp/net_exp_final.txt" "../temp/net_tf_final.txt" "../temp/net_mirna_final.txt" "../temp/net_ppi_unique_nodes_int.txt" >> ./temp/slice.txt
+#consensus clustering
+echo -n "Community detection... "
+echo -n "Enter the enter the algorithm you want to use for network clustering (0: oslom undirected, 2: infomap undirected, 4: louvain, 5: label propagation method, 8: modularity optimization)> "
+read alg
+cd clustering_programs_5_2
+python select.py -slices ../temp/slice.txt -p $alg -f ../temp/slice_out -c 100
+cp ../temp/slice_out/results_consensus/tp ../temp/
+cd ..
+awk 'NR%2==0' temp/tp > temp/comm.txt
+awk 'NF>=4' temp/comm.txt > temp/comm_filt.txt
+sed -i 's/ /	/g' temp/comm_filt.txt
+Rscript ./code/conversion_communities.R
 # rm -r temp
-# echo -n "Community detection finsihed, look at the output: comm_final_genesymbol.txt"
+echo -n "Community detection finsihed, look at the output: comm_final_genesymbol.txt"
