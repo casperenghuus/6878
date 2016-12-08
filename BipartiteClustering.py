@@ -4,6 +4,7 @@ import os
 import re
 import argparse
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import seaborn as sns
@@ -148,16 +149,25 @@ def Spectral_CoClustering(args):
         if args.arpack:
             model = SpectralCoclustering(
                 n_clusters=args.nClusters, svd_method='arpack')
+        else:
+            model = SpectralCoclustering(
+                n_clusters=args.nClusters)
     except:
         print '-r 1 may cause problems when svd_method has been set to arpack'
-    else:
-        model = SpectralCoclustering(
-            n_clusters=args.nClusters)
     model.fit(args.M)
 
     # Fit to data
     fit_data = args.M[np.argsort(model.row_labels_)]
     fit_data = args.M[:, np.argsort(model.column_labels_)]
+
+    # Save fitted data if specified
+    if args.fout is not None:
+        pdx = pd.DataFrame(
+            fit_data,
+            index=np.argsort(model.row_labels_),
+            columns=np.array(args.col_idx)[np.argsort(model.column_labels_)]
+        )
+        pdx.to_csv(args.fout + '.csv', index=True)
 
     return model, fit_data
 
@@ -218,6 +228,11 @@ if __name__=='__main__':
         default = 'All',
         type = str)
     parser.add_argument(
+        '-fout',
+        dest = 'fout',
+        help = 'Output file if saving fitted data',
+        type = str)
+    parser.add_argument(
         '-p',
         dest = 'plot',
         help = 'Set to plot heatmaps',
@@ -263,6 +278,7 @@ if __name__=='__main__':
     args.paths = paths
     if 'All' in args.slices:
         args.slices = args.paths.keys()
+
     # BUILD MATRIX
     args.M, args.col_idx = build_matrix(args)
 
