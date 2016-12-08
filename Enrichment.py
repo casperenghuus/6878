@@ -23,8 +23,9 @@ with open(ns.nodes) as nodeFile:
 
 # Read in database files
 dbFolder = ns.dbfolder
-dbNames = ['BioGrid', 'cell', 'hprd',
-        'intact', 'mint', 'nat', 'react',]
+# dbNames = ['BioGrid', 'cell', 'hprd',
+        # 'intact', 'mint', 'nat', 'react',]
+dbNames = ['exp_inweb_im']
 # dbNames = ['imid']
 dbFnames = [os.path.join(dbFolder, dbName + '.csv') for dbName in dbNames]
 dbdf = pd.DataFrame()

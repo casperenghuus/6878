@@ -6,6 +6,7 @@ import scipy.stats as stats
 import pandas as pd
 import numpy as np
 import os
+import igraph as ig
 
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('clusterfiles', help = 'clusters to analyze',
@@ -16,13 +17,21 @@ parser.add_argument('--msigprefix', help = 'prefix for msig database files',
         type = str)
 parser.add_argument('--nodes', help = 'file to identify the nodes',
         type = str)
+parser.add_argument('--graphs', help = 'files to the graphs to compute statistics like conductance',
+        type = str, nargs = '+')
 ns = parser.parse_args()
 
 with open(ns.nodes, 'r') as f:
     cu.loadNodes(f)
 
+# Read in graph file
+gs = []
+for fname in ns.graphs:
+    with open(fname, 'r'):
+        gs.append(ig.Graph().Read_Ncol(fname, directed = False))
+
 # Read db files to analyze
-db = cu.readMSig('Gene4x/msigdb/', ['chr', 'biocarta'])
+db = cu.readMSig('Gene4x/msigdb/', ['chr', 'cp', 'biocarta', 'reactome', 'go', 'kegg', 'mir'])
 for s in db.keys():
     db[s] = {d: set(c) for (d, c) in db[s].items()}
 total_length = sum(len(s) for s in db)
@@ -30,21 +39,46 @@ total_length = sum(len(s) for s in db)
 gene_count = 45956
 # or 54127 :)
 
-fracs = pd.DataFrame()
+summary = pd.DataFrame()
 threshold = 0.05
 
 # Read clusters
 for (k, clusterfile) in enumerate(ns.clusterfiles):
     (memb, clusters) = cu.readComms(clusterfile)
+    # Throw away slice nodes
+    clusters = [c for c in clusters if len(c) > 0]
     
-    clusters = cu.comms2nodes(clusters)
+    clusters_nodes = cu.comms2nodes(clusters)
     
-    ps = {dbname: np.zeros((len(clusters), len(db[dbname]))) for dbname in db.keys()}
+    ps = {dbname: np.zeros((len(clusters_nodes), len(db[dbname]))) for dbname in db.keys()}
+    conductances = np.zeros((len(clusters_nodes), len(gs)))
     # ps = np.zeros((len(clusters), len(db)))
     
-    # Hypergeometric test
-    for (i, c) in enumerate(clusters):
-        c_set = c
+    # Compute statistics
+    summary_row = {}
+
+    # Cluster size
+    summary_row['clusters'] = len(clusters)
+    cluster_lengths = np.array([len(c) for c in clusters])
+    summary_row['cluster length min'] = np.min(cluster_lengths)
+    summary_row['cluster length max'] = np.max(cluster_lengths)
+    summary_row['cluster length mean'] = np.mean(cluster_lengths)
+    summary_row['cluster length median'] = np.median(cluster_lengths)
+
+    # Modularity
+    for (j, g) in enumerate(gs):
+        for v in g.vs:
+            v['cluster'] = memb[v['name']]
+        # vc = ig.VertexClustering.FromAttribute(g, 'cluster',)
+        summary_row['modularity ' + ns.graphs[j]] = g.modularity(g.vs['cluster'], weights = g.es['weight'] if g.is_weighted() else None)
+
+    most_sigs = []
+    for i in range(len(clusters)):
+        c_set = clusters_nodes[i]
+        c = clusters[i]
+        most_sig = {}
+
+        # Hypergeometric test
         for (dbname, dbcontent) in db.items():
             for (j, (dname, dgenes)) in enumerate(dbcontent.items()):
                 enriched = len(dgenes.intersection(c_set))
@@ -52,11 +86,35 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
                 size = len(c_set)
                 ps[dbname][i, j] = min(stats.hypergeom.sf(enriched - 1, gene_count, verified, size) * total_length, 1)
 
-    fracs = fracs.append(pd.DataFrame([{dbname: np.mean(ps[dbname].min(1) < threshold) for dbname in db.keys()}], index = ['clusterfile']))
+            # Filter for most significant hit
+            min_ind = np.argmin(ps[dbname][i, :])
+            if ps[dbname][i, min_ind] < 1:
+                most_sig[dbname + ' entry'] = dbcontent.keys()[min_ind]
+                most_sig[dbname + ' p'] = ps[dbname][i, min_ind]
+
+        most_sigs.append(most_sig)
+
+        # Conductances
+        for (j, g) in enumerate(gs):
+            conductances[i, j] = cu.conductance(g, c)
+
+    summary_row.update({dbname: np.mean(ps[dbname].min(1) < threshold) for dbname in db.keys()})
+    for (j, g) in enumerate(gs):
+        summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
+        summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
+        summary_row['conductance mean ' + ns.graphs[j]] = conductances[:,j].mean()
+        summary_row['conductance median ' + ns.graphs[j]] = np.median(conductances[:,j])
+    summary = summary.append(pd.DataFrame([summary_row], index = [clusterfile]))
     
     all_ps = np.concatenate(ps.values(), axis = 1)
+    all_vals = np.concatenate([all_ps, conductances], axis = 1)
     all_labels = [key for dbcontent in db.values() for key in dbcontent.keys()]
-    df = pd.DataFrame(all_ps, columns = all_labels)
-    df.to_csv(os.path.splitext(clusterfile)[0] + '_enr.csv')
+    all_labels.extend(['conductance ' + g for g in ns.graphs])
+    df = pd.DataFrame(all_vals, columns = all_labels)
+    basename = os.path.splitext(clusterfile)[0]
+    df.to_csv(basename + '_enr.csv')
+    most_sigs = pd.DataFrame(most_sigs)
+    most_sigs.to_csv(basename + '_enr_high.csv')
+    cu.writeComms(clusters_nodes, basename + '_sym.txt')
 
-fracs.to_csv(ns.outfile)
+summary.to_csv(ns.outfile)

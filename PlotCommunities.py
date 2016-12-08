@@ -5,6 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from scipy.sparse import coo_matrix
 import numpy as np
+import ClusteringUtils as cu
 
 def spAdjMat(graph):
     xs, ys = map(array, zip(*graph.get_edgelist()))
@@ -56,58 +57,29 @@ def layoutByAttr(g, memb, cluster_strength=100, layout = lambda x: x.layout('fr'
     l = layout(g_new)[0:len(g.vs)]
     return l
 
-def conductance(g, c):
-    """ Compute conductance of cluster c in graph g """
-    # # Old
-    # complement = set(g.vs['name']).difference(c)
-    # inter_c = []
-    # inter_comp = []
-    # intra = []
-    # for e in g.es:
-    #     print(e)
-    #     v1 = g.vs[e.source]['name']
-    #     v2 = g.vs[e.source]['name']
-    #     # print v1, v2
-    #     if (v1 in c and v2 in complement) or (v2 in c and v1 in complement):
-    #         intra.append(e['weight'])
-    #     elif v1 in c and v2 in c:
-    #         inter_c.append(e['weight'])
-    #     else:
-    #         inter_comp.append(e['weight'])
-    # intra_w = sum(intra)
-    # inter_c_w = sum(inter_c)
-    # inter_comp_w = sum(inter_comp)
-    # # print(intra)
-    # # print(inter_c)
-    # # print(inter_comp)
-    # if intra_w == 0:
-    #     cond = 0
-    # elif inter_c_w == 0 or inter_comp_w == 0:
-    #     cond = float('inf')
-    # else:
-    #     cond = intra_w/min(inter_c_w, inter_comp_w) 
-    # return cond
+# def conductance(g, c):
+#     """ Compute conductance of cluster c in graph g """
 
-    # New
-    inds = clusterToInd(g, c)
-    A = spAdjMat(g).tocsc()
-    c_mask = np.zeros(A.shape[0], dtype = bool)
-    c_mask[inds] = True
-    comp_mask = np.logical_not(c_mask)
+#     # New
+#     inds = clusterToInd(g, c)
+#     A = spAdjMat(g).tocsc()
+#     c_mask = np.zeros(A.shape[0], dtype = bool)
+#     c_mask[inds] = True
+#     comp_mask = np.logical_not(c_mask)
 
-    intra_w = A[c_mask, :][:, comp_mask].sum()
-    inter_c_w = A[c_mask, :][:, c_mask].sum()
-    inter_comp_w = A[comp_mask, :][:, comp_mask].sum()
-    # print(intra)
-    # print(inter_c)
-    # print(inter_comp)
-    if intra_w == 0:
-        cond = 0
-    elif inter_c_w == 0 or inter_comp_w == 0:
-        cond = float('inf')
-    else:
-        cond = intra_w/min(inter_c_w, inter_comp_w) 
-    return cond
+#     intra_w = A[c_mask, :][:, comp_mask].sum()
+#     inter_c_w = A[c_mask, :][:, c_mask].sum()
+#     inter_comp_w = A[comp_mask, :][:, comp_mask].sum()
+#     # print(intra)
+#     # print(inter_c)
+#     # print(inter_comp)
+#     if intra_w == 0:
+#         cond = 0
+#     elif inter_c_w == 0 or inter_comp_w == 0:
+#         cond = float('inf')
+#     else:
+#         cond = intra_w/min(inter_c_w, inter_comp_w) 
+#     return cond
 
 (memb, clusters) = readComms('data/MultiClusterTensor/clusters_renamed.txt')
 g = ig.Graph().Read_Ncol('data/net_mirna_final.txt', directed = False)

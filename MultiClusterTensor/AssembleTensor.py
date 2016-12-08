@@ -5,16 +5,18 @@ from __future__ import print_function
 import argparse
 import os
 
-outfolder = '../data/MultiClusterTensor'
-# print(outfolder)
-if not os.path.exists(outfolder):
-    os.makedirs(outfolder)
 
 parser = argparse.ArgumentParser(description = 'Parse input network files')
 parser.add_argument('files', nargs = '+', help = 'filenames of files corresponding to each layer',
         type = argparse.FileType('r'))
+parser.add_argument('--outfolder', help = 'folder to write nodes and cluster files',
+        type = str)
 
 ns = parser.parse_args()
+# outfolder = '../data/MultiClusterTensor'
+outfolder = ns.outfolder
+if not os.path.exists(outfolder):
+    os.makedirs(outfolder)
 # ns = parser.parse_args(["data/net_exp_final.txt"])
 
 # Just assemble 3-tensor
