@@ -122,7 +122,7 @@ def readComms(fname):
     with open(fname, 'r') as f:
         for line in f:
             line = line.strip()
-            if not line.startswith('#'):
+            if not line.startswith('#') and len(line) > 0:
                 cluster = []
                 clusters.append(cluster)
                 for node in line.split(' '):
