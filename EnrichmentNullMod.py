@@ -51,7 +51,7 @@ for length in size_range:
     # Compute statistics
     for i in range(ns.iters):
         print(i)
-        c_set = np.random.choice(nodes, size = length, replace = False)
+        c_set = np.random.choice(np.array(nodes), size = length, replace = False)
 
         # Hypergeometric test
         for (dbname, dbcontent) in db.items():

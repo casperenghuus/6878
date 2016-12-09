@@ -13,6 +13,7 @@ node2ind = {}
 
 def loadNodes(nodeFile):
     global ind2node, node2ind
+    nodes = []
     """ Load node indices in nodes.txt file """
     i = 1
     for line in nodeFile:
@@ -21,7 +22,9 @@ def loadNodes(nodeFile):
             line_s = line_s.strip('"')
             ind2node[i] = line_s
             node2ind[line_s] = i
+            nodes.append(line_s)
         i += 1
+    return nodes
 
 def convertToNodes(df):
     """ Convert string entries in data frame to indices """
