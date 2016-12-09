@@ -40,7 +40,7 @@ gene_count = 45956
 # or 54127 :)
 
 summary = pd.DataFrame()
-threshold = 0.05
+threshold = 0.005
 
 # Read clusters
 for (k, clusterfile) in enumerate(ns.clusterfiles):
