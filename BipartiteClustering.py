@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import seaborn as sns
 from sklearn.cluster.bicluster import SpectralCoclustering
+from sklearn.cluster.bicluster import SpectralBiclustering
 
 pipelinePath = 'FortunatoPipelinePath.txt'
 
@@ -20,10 +21,7 @@ def build_paths():
         fortunatoPath = fh.readline().rstrip()
 
     # Regex to get file and capture cluster number/slice number
-    f_re = re.compile('.*/slice_(\d+)/(\d+)/tp$')
-
-    # Number of clusters
-    nClusters = 0
+    f_re = re.compile('.*slice_out_oslom/slice_(\d+)/results_(\d+)/tp$')
 
     # Get tp paths, their slice number and their cluster number
     paths = {}
@@ -31,7 +29,6 @@ def build_paths():
         for f in files:
             match = f_re.match(os.path.join(root,f))
             if match:
-                nClusters += 1
                 p = match.group(0) #Path
                 s = match.group(1) #Slice
                 c = match.group(2) #Cluster
@@ -40,28 +37,24 @@ def build_paths():
                     paths[s].append({'path':p, 'cluster':c})
                 else:
                     paths[s] = [{'path':p, 'cluster':c}]
-    return paths, nClusters
+    return paths
 
 def build_matrix(args):
     '''Build matrix from tp column vectors'''
 
     M = None
-    col_idx = []
 
     for s in args.slices:
         nResults = 0 # Track number of results
         try:
             for p in args.paths[s]:
-                # Name for column based on tp file
-                colName = 's' + s + 'c' + p['cluster']
-                col_idx.append(colName)
                 # Create matrix
                 if M is None:
-                    M = tp_to_col(p['path'])
+                    M, CL = tp_to_col(p['path'], args, [])
                 # Append columns to matrix
                 else:
-                    C = tp_to_col(p['path'])
-                    M = append_col(C, M)
+                    C, CL = tp_to_col(p['path'], args, CL)
+                    M = append_cols(C, M)
 
                 # Break loop if a maximum number of results has been set
                 if args.results != 'All':
@@ -72,37 +65,37 @@ def build_matrix(args):
         except KeyError, e:
             print '%s not a valid slice'%e
 
-    return M, col_idx
+    return M, int(np.median(map(int, CL)))
 
-def append_col(C,M):
+def append_cols(N,M):
     '''Append column to matrix. If their sizes differ, buffer by zeros'''
 
     # Matrix/column dimensions
     shapeM = M.shape
-    sizeCol = C.size
+    shapeN = N.shape
 
     # Test if there is a difference in number of rows
-    diff = shapeM[0] - sizeCol
+    diff = shapeM[0] - shapeN[0]
 
     # Append column to matrix as new column
     if diff == 0:
-        M = np.hstack([M, C])
+        M = np.hstack([M, N])
     # Add extra zero-rows if new column has less rows than matrix.
     #  Append to matrix as new column
     elif diff > 0:
-        extraRows = np.ones([diff, 1])
-        C = np.vstack([C, extraRows])
-        M = np.hstack([M, C])
+        extraRows = np.ones([diff, shapeN[1]])
+        N = np.vstack([N, extraRows])
+        M = np.hstack([M, N])
     # Add extra zero-rows if matrix has less rows than new column.
     #  Append column to matrix as new column
     elif diff < 0:
         extraRows = np.ones([abs(diff), shapeM[1]])
         M = np.vstack([M, extraRows])
-        M = np.hstack([M, C])
+        M = np.hstack([M, N])
 
     return M
 
-def tp_to_col(p):
+def tp_to_col(p, args, clusterLengths):
     '''
     Read tp file column vector. Module information
     is stored in case it becomes useful later.
@@ -134,13 +127,17 @@ def tp_to_col(p):
 
             line = fh.readline()
 
-    # Create column vector
-    col = np.ones([max_val, 1], dtype=float)
-    for k in modules.keys():
-        for i in modules[k]['nodes']:
-            col[i - 1,0] = 10
-
-    return col
+    if args.set_module is not None:
+        return modules
+    else:
+        # Create column vector
+        nClusters = len(modules.keys())
+        M = np.ones([max_val, nClusters], dtype=float)
+        for k in modules.keys():
+            for i in modules[k]['nodes']:
+                M[i - 1,k] = 10
+        clusterLengths.append(nClusters)
+        return M, clusterLengths
 
 def Spectral_CoClustering(args):
     '''Function to perform bipartite clustering'''
@@ -160,28 +157,58 @@ def Spectral_CoClustering(args):
     fit_data = args.M[np.argsort(model.row_labels_)]
     fit_data = args.M[:, np.argsort(model.column_labels_)]
 
+    save_clusters(model, fit_data, args, '_CoClustering')
+
+    return model, fit_data
+
+def Spectral_BiClustering(args):
+    '''Function to perform bipartite clustering'''
+    # Create model
+    try:
+        if args.arpack:
+            model = SpectralBiclustering(
+                n_clusters=args.nClusters, svd_method='arpack')
+        else:
+            model = SpectralBiclustering(
+                n_clusters=args.nClusters)
+    except:
+        print '-r 1 may cause problems when svd_method has been set to arpack'
+    model.fit(args.M)
+
+    # Fit to data
+    fit_data = args.M[np.argsort(model.row_labels_)]
+    fit_data = args.M[:, np.argsort(model.column_labels_)]
+
+    save_clusters(model, fit_data, args, '_BiClustering')
+
+    return model, fit_data
+
+def save_clusters(model, fit_data, args, suffix):
     # Save fitted data if specified
     if args.fout is not None:
         pdx = pd.DataFrame(
             fit_data,
-            index=np.argsort(model.row_labels_),
-            columns=np.array(args.col_idx)[np.argsort(model.column_labels_)]
-        )
-        pdx.to_csv(args.fout + '.csv', index=True)
+            index=np.argsort(model.row_labels_))
+        pdx.to_csv(args.df + '/' + args.fout + suffix + '.csv', index=True)
 
-    return model, fit_data
+        with open(args.df + '/' + args.fout + suffix + '_tp.csv', 'w') as fh:
+            for i in xrange(args.nClusters):
+                subM = model.get_indices(i)[0]
+                comment = '#module {i} size: {l}'.format(i=i, l=len(subM))
+                cluster = map(str, map(lambda x:x+1, subM))
+                fh.write(comment + '\n')
+                fh.write(' '.join(cluster) + '\n')
 
-def plot_spectral(data, fout, col_idx, args, title):
+def plot_spectral(data, fout, args, title):
     '''Function to plot bipartite cluster'''
 
     # Set figure size
     plt.figure(figsize=args.psize)
 
     # Heatmap
-    sns.heatmap(data, xticklabels=col_idx)
+    sns.heatmap(data, xticklabels=[], yticklabels=[])
 
     # Annotations
-    plt.xticks(rotation='vertical')
     plt.title(title)
     plt.savefig(args.pf + fout + '.png')
     plt.clf(); # Clear all plots
@@ -189,15 +216,15 @@ def plot_spectral(data, fout, col_idx, args, title):
 if __name__=='__main__':
 
     # Get file paths and number of clusters
-    paths, nClusters = build_paths()
+    paths = build_paths()
 
     # PARSE ARGUMENTS
     parser = argparse.ArgumentParser(description = 'Parse input network files')
     parser.add_argument(
         '-c',
         dest = 'nClusters',
-        help = 'Number of clusters. (Default = number of tp files)',
-        default = nClusters,
+        help = 'Number of clusters. (Default = median number of cluster)',
+        default = None,
         type = int)
     parser.add_argument(
         '-arpack',
@@ -231,6 +258,12 @@ if __name__=='__main__':
         '-fout',
         dest = 'fout',
         help = 'Output file if saving fitted data',
+        type = str)
+    parser.add_argument(
+        '-df',
+        dest = 'df',
+        help = 'Folder to save data. (Default = "data")',
+        default = 'data',
         type = str)
     parser.add_argument(
         '-p',
@@ -272,25 +305,38 @@ if __name__=='__main__':
         default = [10, 20],
         type = int)
 
+
     args = parser.parse_args()
 
     # Update args
+    args.set_module = None # Necessary ofr other scripts
     args.paths = paths
+
     if 'All' in args.slices:
         args.slices = args.paths.keys()
 
     # BUILD MATRIX
-    args.M, args.col_idx = build_matrix(args)
+    args.M, nClusters = build_matrix(args)
 
-    # CO-CLUSTERING
+    if args.nClusters is None:
+        args.nClusters = nClusters
+
+    # CLUSTERING
     cc_model, cc_fit = Spectral_CoClustering(args)
+    bc_model, bc_fit = Spectral_BiClustering(args)
 
     # Plot co-clusters
     if args.plot:
-        plot_spectral(args.M, args.pOrigName, args.col_idx, args,
-            'M: Before coclustering')
-        plot_spectral(cc_fit, args.pCluName, [], args,
-            'M: After coclustering; rearranged to show coclusters')
+        plot_spectral(args.M, args.pOrigName + 'no_clustering', args,
+            'M: Before Clustering')
+        plot_spectral(cc_fit, args.pCluName + 'CoClustering', args,
+            '\n'.join(['M: After CoClustering; rearranged to show CoClusters',
+                      '{n} clusters used'.format(n=args.nClusters)]))
+        plot_spectral(bc_fit, args.pCluName + 'BiClustering', args,
+            '\n'.join(['M: After BiClustering; rearranged to show BiClusters',
+                      '{n} clusters used'.format(n=args.nClusters)]))
+
+    print 'Clusters used = %i'%args.nClusters
 
 
 

@@ -1,1 +1,1 @@
-/data/Dropbox (MIT)/Share/Casper/6.878 FA 16 Final project/FortunatoPipeline
+/Users/casperenghuus/Dropbox (MIT)/GitHub/6878/data/full-sd
