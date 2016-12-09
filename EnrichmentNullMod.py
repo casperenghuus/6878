@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import igraph as ig
+from itertools import chain
 
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('community_sizes', help = 'different sizes to compute the p-value for',
@@ -42,7 +43,7 @@ cut_offs = []
 
 # Generate p values
 # for length in ns.community_sizes:
-size_range = range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)
+size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
 for length in size_range:
     # Generate cluster
     ps = {dbname: np.zeros((ns.iters, len(db[dbname]))) for dbname in db.keys()}
