@@ -161,7 +161,7 @@ def Spectral_CoClustering(args):
 
     return model, fit_data
 
-def Spectral_BiClustering(args):
+def Spectral_BiClustering(M, args):
     '''Function to perform bipartite clustering'''
     # Create model
     try:
@@ -173,31 +173,37 @@ def Spectral_BiClustering(args):
                 n_clusters=args.nClusters)
     except:
         print '-r 1 may cause problems when svd_method has been set to arpack'
-    model.fit(args.M)
+
+    model.fit(M)
 
     # Fit to data
-    fit_data = args.M[np.argsort(model.row_labels_)]
-    fit_data = args.M[:, np.argsort(model.column_labels_)]
+    fit_data = M[np.argsort(model.row_labels_)]
+    fit_data = M[:, np.argsort(model.column_labels_)]
 
-    save_clusters(model, fit_data, args, '_BiClustering')
+    save_clusters(model, fit_data, args, '_BiClustering', 1)
 
     return model, fit_data
 
-def save_clusters(model, fit_data, args, suffix):
+def save_clusters(model, fit_data, args, suffix, idx=0):
     # Save fitted data if specified
     if args.fout is not None:
         pdx = pd.DataFrame(
             fit_data,
             index=np.argsort(model.row_labels_))
-        pdx.to_csv(args.df + '/' + args.fout + suffix + '.csv', index=True)
+        # Save entire dataframe to file. Commented out for speed
+        # pdx.to_csv(args.df + '/' + args.fout + suffix + '.csv', index=True)
 
+        # Save tp file
         with open(args.df + '/' + args.fout + suffix + '_tp.csv', 'w') as fh:
+            n = 0
             for i in xrange(args.nClusters):
-                subM = model.get_indices(i)[0]
-                comment = '#module {i} size: {l}'.format(i=i, l=len(subM))
-                cluster = map(str, map(lambda x:x+1, subM))
-                fh.write(comment + '\n')
-                fh.write(' '.join(cluster) + '\n')
+                subM = model.get_indices(i)[idx]
+                if list(subM):
+                    comment = '#module {n} size: {l}'.format(n=n, l=len(subM))
+                    cluster = map(str, map(lambda x:x+1, subM))
+                    fh.write(comment + '\n')
+                    fh.write(' '.join(cluster) + '\n')
+                    n += 1
 
 def plot_spectral(data, fout, args, title):
     '''Function to plot bipartite cluster'''
@@ -323,7 +329,7 @@ if __name__=='__main__':
 
     # CLUSTERING
     cc_model, cc_fit = Spectral_CoClustering(args)
-    bc_model, bc_fit = Spectral_BiClustering(args)
+    bc_model, bc_fit = Spectral_BiClustering(args.M.T, args)
 
     # Plot co-clusters
     if args.plot:
@@ -332,7 +338,7 @@ if __name__=='__main__':
         plot_spectral(cc_fit, args.pCluName + 'CoClustering', args,
             '\n'.join(['M: After CoClustering; rearranged to show CoClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
-        plot_spectral(bc_fit, args.pCluName + 'BiClustering', args,
+        plot_spectral(bc_fit.T, args.pCluName + 'BiClustering', args,
             '\n'.join(['M: After BiClustering; rearranged to show BiClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
 
