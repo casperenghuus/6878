@@ -12,10 +12,10 @@ from itertools import chain
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('community_sizes', help = 'different sizes to compute the p-value for',
         type = int, nargs = '*')
-parser.add_argument('--comm_size_max', help = 'max sizes to compute the p-value for',
-        type = int)
-parser.add_argument('--comm_size_step', help = 'step to compute the p-value for',
-        type = int)
+# parser.add_argument('--comm_size_max', help = 'max sizes to compute the p-value for',
+#         type = int)
+# parser.add_argument('--comm_size_step', help = 'step to compute the p-value for',
+#         type = int)
 parser.add_argument('--outfile', help = 'where to store the p values',
         type = str)
 parser.add_argument('--iters', help = 'how many iterations to run',
@@ -42,16 +42,17 @@ threshold = 0.05
 cut_offs = []
 
 # Generate p values
-# for length in ns.community_sizes:
-size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
-for length in size_range:
+for length in ns.community_sizes:
+# size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
+# for length in size_range:
+    print('Cluster length: {}'.format(length))
     # Generate cluster
     ps = {dbname: np.zeros((ns.iters, len(db[dbname]))) for dbname in db.keys()}
     # ps = np.zeros((len(clusters), len(db)))
     
     # Compute statistics
     for i in range(ns.iters):
-        print(i)
+        print('Iteration: {}'.format(i))
         c_set = np.random.choice(np.array(nodes), size = length, replace = False)
 
         # Hypergeometric test
@@ -66,6 +67,7 @@ for length in size_range:
     cut_off = np.percentile(all_ps, threshold)
     cut_offs.append(cut_off)
 
-df = pd.DataFrame(cut_offs, columns = ['cut-off'], index = size_range)
+# df = pd.DataFrame(cut_offs, columns = ['cut-off'], index = size_range)
+df = pd.DataFrame(cut_offs, columns = ['cut-off'], index = ns.community_sizes)
 df.index.name = 'length'
 df.to_csv(ns.outfile)

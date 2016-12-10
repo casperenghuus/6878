@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import igraph as ig
+import scipy.interpolate as interp
 
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('clusterfiles', help = 'clusters to analyze',
@@ -19,6 +20,8 @@ parser.add_argument('--nodes', help = 'file to identify the nodes',
         type = str)
 parser.add_argument('--graphs', help = 'files to the graphs to compute statistics like conductance',
         type = str, nargs = '+')
+parser.add_argument('--thresholds', help = 'file p value thresholds',
+        type = str)
 ns = parser.parse_args()
 
 with open(ns.nodes, 'r') as f:
@@ -44,6 +47,7 @@ threshold = 0.005
 
 # Read clusters
 for (k, clusterfile) in enumerate(ns.clusterfiles):
+    print('File: {}'.format(clusterfile))
     (memb, clusters) = cu.readComms(clusterfile)
     # Throw away slice nodes
     clusters = [c for c in clusters if len(c) > 0]
@@ -65,6 +69,15 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
     summary_row['cluster length mean'] = np.mean(cluster_lengths)
     summary_row['cluster length median'] = np.median(cluster_lengths)
 
+    # Compute thresholds
+    thresh_df = pd.read_csv(ns.thresholds)
+    t_mat = thresh_df.as_matrix()
+    t_lengths = t_mat[:,0]
+    t_cutoffs_log = np.log(t_mat[:,1])
+    # t_interp = interp.interp1d(t_lengths, t_cutoffs_log)
+    t_interp = interp.InterpolatedUnivariateSpline(t_lengths, t_cutoffs_log, k = 1)
+    thresholds = np.exp(t_interp(cluster_lengths))
+
     # Modularity
     for (j, g) in enumerate(gs):
         for v in g.vs:
@@ -77,6 +90,7 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
         c_set = clusters_nodes[i]
         c = clusters[i]
         most_sig = {}
+        most_sig['threshold'] = thresholds[i]
 
         # Hypergeometric test
         for (dbname, dbcontent) in db.items():
@@ -91,6 +105,7 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
             if ps[dbname][i, min_ind] < 1:
                 most_sig[dbname + ' entry'] = dbcontent.keys()[min_ind]
                 most_sig[dbname + ' p'] = ps[dbname][i, min_ind]
+                most_sig[dbname + ' sig'] = ps[dbname][i, min_ind] < most_sig['threshold']
 
         most_sigs.append(most_sig)
 
@@ -98,7 +113,7 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
         for (j, g) in enumerate(gs):
             conductances[i, j] = cu.conductance(g, c)
 
-    summary_row.update({dbname: np.mean(ps[dbname].min(1) < threshold) for dbname in db.keys()})
+    summary_row.update({dbname: np.mean(ps[dbname].min(1) < thresholds) for dbname in db.keys()})
     for (j, g) in enumerate(gs):
         summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
         summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
