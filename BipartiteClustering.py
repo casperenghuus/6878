@@ -135,10 +135,10 @@ def tp_to_col(p, args, clusterLengths):
     else:
         # Create column vector
         nClusters = len(modules.keys())
-        M = np.ones([max_val, nClusters], dtype=float)
+        M = np.zeros([max_val, nClusters], dtype=float)
         for k in modules.keys():
             for i in modules[k]['nodes']:
-                M[i - 1,k] = 10
+                M[i - 1,k] = 1
         clusterLengths.append(nClusters)
         return M, clusterLengths
 
