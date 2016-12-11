@@ -28,7 +28,8 @@ parser.add_argument('--nodes', help = 'file to identify the nodes',
 ns = parser.parse_args()
 
 with open(ns.nodes, 'r') as f:
-    nodes = cu.loadNodes(f)
+    nc = cu.loadNodes(f)
+    nodes = nc.nodes
 
 # Read db files to analyze
 db = cu.readMSig('Gene4x/msigdb/', ['chr', 'cp', 'biocarta', 'reactome', 'go', 'kegg', 'mir'])
@@ -68,7 +69,7 @@ def compute_cutoff(db, iters, nodes, length):
     return cut_off
     # cut_offs.append(cut_off)
 
-cut_offs = Parallel(n_jobs = 2)(delayed(compute_cutoff)(db, iters, nodes, length) for length in ns.community_sizes)
+cut_offs = Parallel(n_jobs = 22)(delayed(compute_cutoff)(db, iters, nodes, int(length)) for length in ns.community_sizes)
 # Generate p values
 # size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
 # for length in size_range:
