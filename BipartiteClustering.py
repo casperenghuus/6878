@@ -45,7 +45,6 @@ def build_matrix(args):
     M = None
 
     for s in args.slices:
-        print s
         nResults = 0 # Track number of results
         try:
             for p in args.paths[s]:
@@ -64,7 +63,6 @@ def build_matrix(args):
                         break
         except KeyError, e:
             print '%s not a valid slice'%e
-        print M.shape
 
     return M, int(np.median(map(int, CL)))
 
