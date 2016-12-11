@@ -142,6 +142,6 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
 
     return summary_row
 
-summary_rows = Parallel(n_jobs = 2)(delayed(analyze)(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene_count, nodes) for (k, clusterfile) in enumerate(ns.clusterfiles))
+summary_rows = Parallel(n_jobs = 22)(delayed(analyze)(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene_count, nodes) for (k, clusterfile) in enumerate(ns.clusterfiles))
 summary = pd.DataFrame(summary_rows, index = ns.clusterfiles)
 summary.to_csv(ns.outfile)
