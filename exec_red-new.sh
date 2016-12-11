@@ -1,4 +1,6 @@
 #! /usr/bin/env bash
+python BipartiteClustering.py -fout biCl_red-new -p -po red-new_noClust_def-Clusters -pc red-new_def-Clusters
+python BipartiteClustering.py -fout biCl_red-new_c190 -c 190
 python BipartiteClustering.py -fout biCl_red-new_c190 -c 190
 python BipartiteClustering.py -fout biCl_red-new_c170 -c 170
 python BipartiteClustering.py -fout biCl_red-new_c150 -c 150
