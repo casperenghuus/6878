@@ -8,14 +8,16 @@ import pandas as pd
 import matplotlib
 # Plotting without X
 matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import seaborn as sns
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
+import scipy.sparse as sparse
+import ClusteringUtils as cu
 
-
-pipelinePath = 'FortunatoPipelinePath.txt'
+pipelinePath = 'co-cluster-test-path.txt'
 
 def build_paths():
     '''Build list of paths for tp files'''
@@ -70,6 +72,23 @@ def build_matrix(args):
 
     return M, int(np.median(map(int, CL)))
 
+def build_matrix2(args):
+    all_clusterings = [cu.readComms(p['path'])[1] for s in args.slices for p in args.paths[s]]
+    all_clusters = [c for clustering in all_clusterings for c in clustering]
+    all_nodes = set([n for c in all_clusters for n in c])
+    ind2node = {i : node for (i, node) in enumerate(all_nodes)}
+    node2ind = {node : i for (i, node) in ind2node.items()}
+
+    M = sparse.csc_matrix((len(all_nodes), len(all_clusters)))
+    for i in range(len(all_clusters)):
+        for n in all_clusters[i]:
+            M[node2ind[n], i] = 1
+
+    median_length = np.median([len(c) for c in all_clusters])
+    args.ind2node = ind2node
+    args.node2ind = node2ind
+    return M, median_length
+
 def append_cols(N,M):
     '''Append column to matrix. If their sizes differ, buffer by zeros'''
 
@@ -86,13 +105,13 @@ def append_cols(N,M):
     # Add extra zero-rows if new column has less rows than matrix.
     #  Append to matrix as new column
     elif diff > 0:
-        extraRows = np.ones([diff, shapeN[1]])
+        extraRows = np.zeros([diff, shapeN[1]])
         N = np.vstack([N, extraRows])
         M = np.hstack([M, N])
     # Add extra zero-rows if matrix has less rows than new column.
     #  Append column to matrix as new column
     elif diff < 0:
-        extraRows = np.ones([abs(diff), shapeM[1]])
+        extraRows = np.zeros([abs(diff), shapeM[1]])
         M = np.vstack([M, extraRows])
         M = np.hstack([M, N])
 
@@ -158,7 +177,7 @@ def Spectral_CoClustering(args):
 
     # Fit to data
     fit_data = args.M[np.argsort(model.row_labels_)]
-    fit_data = args.M[:, np.argsort(model.column_labels_)]
+    fit_data = fit_data[:, np.argsort(model.column_labels_)]
 
     save_clusters(model, fit_data, args, '_CoClustering')
 
@@ -181,7 +200,7 @@ def Spectral_BiClustering(M, args):
 
     # Fit to data
     fit_data = M[np.argsort(model.row_labels_)]
-    fit_data = M[:, np.argsort(model.column_labels_)]
+    fit_data = fit_data[:, np.argsort(model.column_labels_)]
 
     save_clusters(model, fit_data, args, '_BiClustering', 1)
 
@@ -190,9 +209,12 @@ def Spectral_BiClustering(M, args):
 def save_clusters(model, fit_data, args, suffix, idx=0):
     # Save fitted data if specified
     if args.fout is not None:
+        # print(np.argsort(model.row_labels_))
+        coo = args.M.tocoo()
         pdx = pd.DataFrame(
-            fit_data,
-            index=np.argsort(model.row_labels_))
+                {'data' : coo,
+            'index' : np.argsort(model.row_labels_)})
+            # 'columns' : np.argsort(model.column_labels_)})
         # Save entire dataframe to file. Commented out for speed
         # pdx.to_csv(args.df + '/' + args.fout + suffix + '.csv', index=True)
 
@@ -203,7 +225,8 @@ def save_clusters(model, fit_data, args, suffix, idx=0):
                 subM = model.get_indices(i)[idx]
                 if list(subM):
                     comment = '#module {n} size: {l}'.format(n=n, l=len(subM))
-                    cluster = map(str, map(lambda x:x+1, subM))
+                    # cluster = map(str, map(lambda x:x+1, subM))
+                    cluster = map(lambda x: args.ind2node[x], subM)
                     fh.write(comment + '\n')
                     fh.write(' '.join(cluster) + '\n')
                     n += 1
@@ -326,7 +349,8 @@ if __name__=='__main__':
 
     # BUILD MATRIX
     print 'Build Matrix'
-    args.M, nClusters = build_matrix(args)
+    # args.M, nClusters = build_matrix(args)
+    args.M, nClusters = build_matrix2(args)
     print('Median cluster length: {}'.format(nClusters))
 
     if args.nClusters is None:
@@ -343,12 +367,12 @@ if __name__=='__main__':
     # Plot co-clusters
     if args.plot:
         print 'Plotting'
-        plot_spectral(args.M, args.pOrigName + 'no_clustering', args,
+        plot_spectral(args.M.toarray(), args.pOrigName + 'no_clustering', args,
             'M: Before Clustering')
-        plot_spectral(cc_fit, args.pCluName + 'CoClustering', args,
+        plot_spectral(cc_fit.toarray(), args.pCluName + 'CoClustering', args,
             '\n'.join(['M: After CoClustering; rearranged to show CoClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
-        plot_spectral(bc_fit.T, args.pCluName + 'BiClustering', args,
+        plot_spectral(bc_fit.T.toarray(), args.pCluName + 'BiClustering', args,
             '\n'.join(['M: After BiClustering; rearranged to show BiClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
 
