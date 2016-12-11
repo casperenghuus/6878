@@ -26,6 +26,7 @@ cluster_file = 'data/full-sd/biCl_full_sd_c13_BiClustering_tp.csv'
 graph_file = 'data/full-sd/net_exp_final.txt'
 graph_file = 'data/full-sd/net_mirna_final.txt'
 graph_file = 'data/full-sd/net_tf_final.txt'
+graph_file = 'data/full-sd/net_ppi_unique_nodes_int.txt'
 
 (memb, clusters) = cu.readComms(cluster_file)
 g = ig.Graph().Read_Ncol(graph_file, directed = False)

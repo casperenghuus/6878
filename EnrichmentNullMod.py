@@ -8,6 +8,7 @@ import numpy as np
 import os
 import igraph as ig
 from itertools import chain
+from joblib import Parallel, delayed
 
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('community_sizes', help = 'different sizes to compute the p-value for',
@@ -39,12 +40,11 @@ gene_count = 45956
 # or 54127 :)
 
 threshold = 0.05
+iters = ns.iters
 cut_offs = []
 
-# Generate p values
-for length in ns.community_sizes:
-# size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
-# for length in size_range:
+# for length in ns.community_sizes:
+def compute_cutoff(db, iters, nodes, length):
     print('Cluster length: {}'.format(length))
     # Generate cluster
     ps = {dbname: np.zeros((ns.iters, len(db[dbname]))) for dbname in db.keys()}
@@ -65,7 +65,13 @@ for length in ns.community_sizes:
 
     all_ps = np.concatenate(ps.values(), axis = 1)
     cut_off = np.percentile(all_ps, threshold)
-    cut_offs.append(cut_off)
+    return cut_off
+    # cut_offs.append(cut_off)
+
+cut_offs = Parallel(n_jobs = 2)(delayed(compute_cutoff)(db, iters, nodes, length) for length in ns.community_sizes)
+# Generate p values
+# size_range = list(chain(range(1, 10), range(ns.comm_size_step, ns.comm_size_max + 1, ns.comm_size_step)))
+# for length in size_range:
 
 # df = pd.DataFrame(cut_offs, columns = ['cut-off'], index = size_range)
 df = pd.DataFrame(cut_offs, columns = ['cut-off'], index = ns.community_sizes)
