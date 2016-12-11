@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+r!/usr/bin/env python
 
 import os
 import re
@@ -395,12 +395,12 @@ if __name__=='__main__':
     # Plot co-clusters
     if args.plot:
         print 'Plotting'
-        plot_spectral(args.M.toarray(), args.pOrigName + 'no_clustering', args,
+        plot_spectral(args.M, args.pOrigName + 'no_clustering', args,
             'M: Before Clustering')
-        plot_spectral(cc_fit.toarray(), args.pCluName + 'CoClustering', args,
+        plot_spectral(cc_fit, args.pCluName + 'CoClustering', args,
             '\n'.join(['M: After CoClustering; rearranged to show CoClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
-        plot_spectral(bc_fit.T.toarray(), args.pCluName + 'BiClustering', args,
+        plot_spectral(bc_fit.T, args.pCluName + 'BiClustering', args,
             '\n'.join(['M: After BiClustering; rearranged to show BiClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
 
