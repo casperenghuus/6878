@@ -122,7 +122,7 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
         for (j, g) in enumerate(gs):
             conductances[i, j] = cu.conductance(g, c)
 
-    summary_row.update({dbname: np.mean(ps[dbname].min(1) < thresholds) for dbname in db.keys()})
+    summary_row.update({dbname: np.mean(np.logical_and(ps[dbname].min(1) < thresholds, cluster_lengths > 1)) for dbname in db.keys()})
     for (j, g) in enumerate(gs):
         summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
         summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
