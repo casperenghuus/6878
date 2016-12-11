@@ -8,6 +8,7 @@ import numpy as np
 import os
 import igraph as ig
 import scipy.interpolate as interp
+from joblib import Parallel, delayed
 
 parser = argparse.ArgumentParser(description = 'Parse input files')
 parser.add_argument('clusterfiles', help = 'clusters to analyze',
@@ -45,8 +46,19 @@ gene_count = 45956
 summary = pd.DataFrame()
 threshold = 0.005
 nodes = [str(ind) for ind in cu.ind2node.keys()]
+
+# Threshold interpolation
+thresholds = ns.thresholds
+thresh_df = pd.read_csv(thresholds)
+t_mat = thresh_df.as_matrix()
+t_lengths = t_mat[:,0]
+t_cutoffs_log = np.log(t_mat[:,1])
+# t_interp = interp.interp1d(t_lengths, t_cutoffs_log)
+t_interp = interp.InterpolatedUnivariateSpline(t_lengths, t_cutoffs_log, k = 1)
+
 # Read clusters
-for (k, clusterfile) in enumerate(ns.clusterfiles):
+# for (k, clusterfile) in enumerate(ns.clusterfiles):
+def analyze(k, clusterfile, cu, db, thresholds, t_interp, gs, total_length, gene_count, nodes):
     print('File: {}'.format(clusterfile))
     (memb, clusters) = cu.readComms(clusterfile)
     (memb, clusters) = cu.addSingletonClusters(memb, clusters, nodes)
@@ -71,12 +83,6 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
     summary_row['cluster length median'] = np.median(cluster_lengths)
 
     # Compute thresholds
-    thresh_df = pd.read_csv(ns.thresholds)
-    t_mat = thresh_df.as_matrix()
-    t_lengths = t_mat[:,0]
-    t_cutoffs_log = np.log(t_mat[:,1])
-    # t_interp = interp.interp1d(t_lengths, t_cutoffs_log)
-    t_interp = interp.InterpolatedUnivariateSpline(t_lengths, t_cutoffs_log, k = 1)
     thresholds = np.exp(t_interp(cluster_lengths))
 
     # Modularity
@@ -122,7 +128,6 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
         summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
         summary_row['conductance mean ' + ns.graphs[j]] = conductances[:,j].mean()
         summary_row['conductance median ' + ns.graphs[j]] = np.median(conductances[:,j])
-    summary = summary.append(pd.DataFrame([summary_row], index = [clusterfile]))
     
     all_ps = np.concatenate(ps.values(), axis = 1)
     all_vals = np.concatenate([all_ps, conductances], axis = 1)
@@ -135,4 +140,8 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
     most_sigs.to_csv(basename + '_enr_high.csv')
     cu.writeComms(clusters_nodes, basename + '_sym.txt')
 
+    return summary_row
+
+summary_rows = Parallel(n_jobs = 1)(delayed(analyze)(k, clusterfile, cu, db, thresholds, t_interp, gs, total_length, gene_count, nodes) for (k, clusterfile) in enumerate(ns.clusterfiles))
+summary = pd.DataFrame(summary_rows, index = ns.clusterfiles)
 summary.to_csv(ns.outfile)
