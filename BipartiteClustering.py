@@ -17,7 +17,8 @@ from sklearn.cluster.bicluster import SpectralBiclustering
 import scipy.sparse as sparse
 import ClusteringUtils as cu
 
-pipelinePath = 'FortunatoPipelinePath.txt'
+# pipelinePath = 'FortunatoPipelinePath.txt'
+pipelinePath = 'co-cluster-test-path.txt'
 
 def build_paths():
     '''Build list of paths for tp files'''
@@ -79,7 +80,7 @@ def build_matrix2(args):
     ind2node = {i : node for (i, node) in enumerate(all_nodes)}
     node2ind = {node : i for (i, node) in ind2node.items()}
 
-    M = sparse.csc_matrix((len(all_nodes), len(all_clusters)))
+    M = sparse.dok_matrix((len(all_nodes), len(all_clusters)))
     for i in range(len(all_clusters)):
         for n in all_clusters[i]:
             M[node2ind[n], i] = 1
