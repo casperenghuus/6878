@@ -5,11 +5,15 @@ import re
 import argparse
 import numpy as np
 import pandas as pd
+import matplotlib
+# Plotting without X
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import seaborn as sns
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
+
 
 pipelinePath = 'FortunatoPipelinePath.txt'
 
@@ -323,6 +327,7 @@ if __name__=='__main__':
     # BUILD MATRIX
     print 'Build Matrix'
     args.M, nClusters = build_matrix(args)
+    print('Median cluster length: {}'.format(nClusters))
 
     if args.nClusters is None:
         args.nClusters = nClusters
