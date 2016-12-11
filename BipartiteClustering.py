@@ -17,8 +17,8 @@ from sklearn.cluster.bicluster import SpectralBiclustering
 import scipy.sparse as sparse
 import ClusteringUtils as cu
 
-# pipelinePath = 'FortunatoPipelinePath.txt'
-pipelinePath = 'co-cluster-test-path.txt'
+pipelinePath = 'FortunatoPipelinePath.txt'
+# pipelinePath = 'co-cluster-test-path.txt'
 
 def invert_permutation(p):
     '''Returns an array s, where s[i] gives the index of i in p.
