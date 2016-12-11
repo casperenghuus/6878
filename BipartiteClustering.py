@@ -6,14 +6,14 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib
+# Plotting without X
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import seaborn as sns
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
 
-# Plotting without X
-matplotlib.use('Agg')
 
 pipelinePath = 'FortunatoPipelinePath.txt'
 
