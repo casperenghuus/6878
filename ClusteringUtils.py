@@ -135,6 +135,17 @@ def readComms(fname):
                 counter += 1
     return (membership, clusters)
 
+def addSingletonClusters(memb, clusters, nodes):
+    new_memb = dict(memb)
+    new_clusters = list(clusters)
+    counter = len(clusters)
+    for node in nodes:
+        if memb.get(node) is None:
+            new_memb[node] = counter
+            new_clusters.append([node])
+            counter += 1
+    return (new_memb, new_clusters)
+
 def writeComms(clusters, fname):
     with open(fname, 'w') as f:
         for c in clusters:
@@ -184,16 +195,15 @@ def conductance(g, c):
 
     intra_w = A[c_mask, :][:, comp_mask].sum()
     inter_c_w = A[c_mask, :][:, c_mask].sum()
-    inter_comp_w = A[comp_mask, :][:, comp_mask].sum()
-    # print(intra)
-    # print(inter_c)
-    # print(inter_comp)
+    # inter_comp_w = A[comp_mask, :][:, comp_mask].sum()
     if intra_w == 0:
         cond = 0
-    elif inter_c_w == 0 or inter_comp_w == 0:
-        cond = float('inf')
+    # elif inter_c_w == 0 or inter_comp_w == 0:
+    #     cond = float('inf')
+    # else:
+    #     cond = intra_w/min(inter_c_w, inter_comp_w) 
     else:
-        cond = intra_w/min(inter_c_w, inter_comp_w) 
+        cond = float(intra_w)/(2*intra_w + inter_c_w)
     return cond
 
 def spAdjMat(graph):

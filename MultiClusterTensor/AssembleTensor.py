@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import sys
 
 
 parser = argparse.ArgumentParser(description = 'Parse input network files')
@@ -31,8 +32,9 @@ scount = len(ns.files)
 slices = [{} for i in range(scount)]
 for (i, f) in enumerate(ns.files):
     for line in f:
+        line = line.strip()
         if line != "":
-            vals = line.split(" ")
+            vals = line.split()
             if len(vals) == 3:
                 slices[i][tuple(map(int, vals[0:2]))] = float(vals[2])
             elif len(vals) == 2:

@@ -44,11 +44,12 @@ gene_count = 45956
 
 summary = pd.DataFrame()
 threshold = 0.005
-
+nodes = [str(ind) for ind in cu.ind2node.keys()]
 # Read clusters
 for (k, clusterfile) in enumerate(ns.clusterfiles):
     print('File: {}'.format(clusterfile))
     (memb, clusters) = cu.readComms(clusterfile)
+    (memb, clusters) = cu.addSingletonClusters(memb, clusters, nodes)
     # Throw away slice nodes
     clusters = [c for c in clusters if len(c) > 0]
     
@@ -86,7 +87,9 @@ for (k, clusterfile) in enumerate(ns.clusterfiles):
         summary_row['modularity ' + ns.graphs[j]] = g.modularity(g.vs['cluster'], weights = g.es['weight'] if g.is_weighted() else None)
 
     most_sigs = []
+    print('Clusters: {}'.format(len(clusters)))
     for i in range(len(clusters)):
+        print(i)
         c_set = clusters_nodes[i]
         c = clusters[i]
         most_sig = {}
