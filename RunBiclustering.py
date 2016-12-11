@@ -14,4 +14,4 @@ sizes = [300, 400, 500, 600, 700]
 for size in sizes:
     commandlist.append('python2 BipartiteClustering.py -fout biCl_red-new_c{} -c {}'.format(size, size))
 
-Parallel(n_jobs = 1)(delayed(execCommand)(x) for x in commandlist)
+Parallel(n_jobs = 24)(delayed(execCommand)(x) for x in commandlist)
