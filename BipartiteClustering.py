@@ -214,6 +214,7 @@ def Spectral_BiClustering(M, args):
 
 def save_clusters(model, fit_data, args, suffix, idx=0):
     # Save fitted data if specified
+    print('Saving')
     if args.fout is not None:
         # print(np.argsort(model.row_labels_))
         # coo = args.M.tocoo()
@@ -236,10 +237,12 @@ def save_clusters(model, fit_data, args, suffix, idx=0):
                     fh.write(comment + '\n')
                     fh.write(' '.join(cluster) + '\n')
                     n += 1
+    print('Saving done')
 
 def plot_spectral(data, fout, args, title):
     '''Function to plot bipartite cluster'''
 
+    print('Plotting')
     # Set figure size
     plt.figure(figsize=args.psize)
 
@@ -250,6 +253,7 @@ def plot_spectral(data, fout, args, title):
     plt.title(title)
     plt.savefig(args.pf + fout + '.png')
     plt.clf(); # Clear all plots
+    print('Plotting done')
 
 if __name__=='__main__':
 
