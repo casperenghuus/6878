@@ -17,8 +17,18 @@ from sklearn.cluster.bicluster import SpectralBiclustering
 import scipy.sparse as sparse
 import ClusteringUtils as cu
 
-pipelinePath = 'FortunatoPipelinePath.txt'
-# pipelinePath = 'co-cluster-test-path.txt'
+# pipelinePath = 'FortunatoPipelinePath.txt'
+pipelinePath = 'co-cluster-test-path.txt'
+
+def invert_permutation(p):
+    '''Returns an array s, where s[i] gives the index of i in p.
+    The argument p is assumed to be some permutation of 0, 1, ..., len(p)-1. 
+    '''
+    n = len(p)
+    s = np.zeros(n, dtype = np.int32)
+    i = np.arange(n, dtype = np.int32)
+    np.put(s, p, i) # s[p[i]] = i 
+    return s
 
 def build_paths():
     '''Build list of paths for tp files'''
@@ -176,12 +186,15 @@ def Spectral_CoClustering(args):
     except:
         print '-r 1 may cause problems when svd_method has been set to arpack'
     print('Running coclustering')
-    model.fit(args.M)
+    model.fit(args.M.tocsc())
     print('Coclustering done')
 
     # Fit to data
-    fit_data = args.M[np.argsort(model.row_labels_)]
-    fit_data = fit_data[:, np.argsort(model.column_labels_)]
+    # fit_data = args.M[np.argsort(model.row_labels_)]
+    # fit_data = fit_data[:, np.argsort(model.column_labels_)]
+    fit_data = args.M.tocoo()
+    fit_data.row = invert_permutation(np.argsort(model.row_labels_))[fit_data.row]
+    fit_data.col = invert_permutation(np.argsort(model.column_labels_))[fit_data.col]
 
     save_clusters(model, fit_data, args, '_CoClustering')
 
@@ -205,8 +218,11 @@ def Spectral_BiClustering(M, args):
     print('Biclustering done')
 
     # Fit to data
-    fit_data = M[np.argsort(model.row_labels_)]
-    fit_data = fit_data[:, np.argsort(model.column_labels_)]
+    # fit_data = M[np.argsort(model.row_labels_)]
+    # fit_data = fit_data[:, np.argsort(model.column_labels_)]
+    fit_data = M.tocoo()
+    fit_data.row = invert_permutation(np.argsort(model.row_labels_))[fit_data.row]
+    fit_data.col = invert_permutation(np.argsort(model.column_labels_))[fit_data.col]
 
     save_clusters(model, fit_data, args, '_BiClustering', 1)
 
