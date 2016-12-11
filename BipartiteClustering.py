@@ -85,11 +85,11 @@ def build_matrix2(args):
         for n in all_clusters[i]:
             M[node2ind[n], i] = 1
 
-    median_length = np.median([len(c) for c in all_clusters])
+    median_size = np.median([len(c) for c in all_clusterings])
     args.ind2node = ind2node
     args.node2ind = node2ind
     print('Matrix built')
-    return M, median_length
+    return M, median_size
 
 def append_cols(N,M):
     '''Append column to matrix. If their sizes differ, buffer by zeros'''
@@ -216,10 +216,10 @@ def save_clusters(model, fit_data, args, suffix, idx=0):
     # Save fitted data if specified
     if args.fout is not None:
         # print(np.argsort(model.row_labels_))
-        coo = args.M.tocoo()
-        pdx = pd.DataFrame(
-                {'data' : coo,
-            'index' : np.argsort(model.row_labels_)})
+        # coo = args.M.tocoo()
+        # pdx = pd.DataFrame(
+        #         {'data' : coo,
+        #     'index' : np.argsort(model.row_labels_)})
             # 'columns' : np.argsort(model.column_labels_)})
         # Save entire dataframe to file. Commented out for speed
         # pdx.to_csv(args.df + '/' + args.fout + suffix + '.csv', index=True)
@@ -357,7 +357,7 @@ if __name__=='__main__':
     print 'Build Matrix'
     # args.M, nClusters = build_matrix(args)
     args.M, nClusters = build_matrix2(args)
-    print('Median cluster length: {}'.format(nClusters))
+    print('Median cluster size: {}'.format(nClusters))
 
     if args.nClusters is None:
         args.nClusters = nClusters
