@@ -87,6 +87,7 @@ def build_matrix2(args):
     median_length = np.median([len(c) for c in all_clusters])
     args.ind2node = ind2node
     args.node2ind = node2ind
+    print('Matrix built')
     return M, median_length
 
 def append_cols(N,M):
@@ -173,7 +174,9 @@ def Spectral_CoClustering(args):
                 n_clusters=args.nClusters)
     except:
         print '-r 1 may cause problems when svd_method has been set to arpack'
+    print('Running coclustering')
     model.fit(args.M)
+    print('Coclustering done')
 
     # Fit to data
     fit_data = args.M[np.argsort(model.row_labels_)]
@@ -196,7 +199,9 @@ def Spectral_BiClustering(M, args):
     except:
         print '-r 1 may cause problems when svd_method has been set to arpack'
 
+    print('Running biclustering')
     model.fit(M)
+    print('Biclustering done')
 
     # Fit to data
     fit_data = M[np.argsort(model.row_labels_)]
