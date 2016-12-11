@@ -214,7 +214,7 @@ def Spectral_BiClustering(M, args):
         print '-r 1 may cause problems when svd_method has been set to arpack'
 
     print('Running biclustering')
-    model.fit(M)
+    model.fit(M.tocsc())
     print('Biclustering done')
 
     # Fit to data
