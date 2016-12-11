@@ -26,7 +26,7 @@ parser.add_argument('--thresholds', help = 'file p value thresholds',
 ns = parser.parse_args()
 
 with open(ns.nodes, 'r') as f:
-    cu.loadNodes(f)
+    nc = cu.loadNodes(f)
 
 # Read in graph file
 gs = []
@@ -45,7 +45,7 @@ gene_count = 45956
 
 summary = pd.DataFrame()
 threshold = 0.005
-nodes = [str(ind) for ind in cu.ind2node.keys()]
+nodes = [str(ind) for ind in nc.ind2node.keys()]
 
 # Threshold interpolation
 thresholds = ns.thresholds
@@ -58,14 +58,14 @@ t_interp = interp.InterpolatedUnivariateSpline(t_lengths, t_cutoffs_log, k = 1)
 
 # Read clusters
 # for (k, clusterfile) in enumerate(ns.clusterfiles):
-def analyze(k, clusterfile, cu, db, thresholds, t_interp, gs, total_length, gene_count, nodes):
+def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene_count, nodes):
     print('File: {}'.format(clusterfile))
     (memb, clusters) = cu.readComms(clusterfile)
     (memb, clusters) = cu.addSingletonClusters(memb, clusters, nodes)
     # Throw away slice nodes
     clusters = [c for c in clusters if len(c) > 0]
     
-    clusters_nodes = cu.comms2nodes(clusters)
+    clusters_nodes = cu.comms2nodes(clusters, nc)
     
     ps = {dbname: np.zeros((len(clusters_nodes), len(db[dbname]))) for dbname in db.keys()}
     conductances = np.zeros((len(clusters_nodes), len(gs)))
@@ -142,6 +142,6 @@ def analyze(k, clusterfile, cu, db, thresholds, t_interp, gs, total_length, gene
 
     return summary_row
 
-summary_rows = Parallel(n_jobs = 1)(delayed(analyze)(k, clusterfile, cu, db, thresholds, t_interp, gs, total_length, gene_count, nodes) for (k, clusterfile) in enumerate(ns.clusterfiles))
+summary_rows = Parallel(n_jobs = 2)(delayed(analyze)(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene_count, nodes) for (k, clusterfile) in enumerate(ns.clusterfiles))
 summary = pd.DataFrame(summary_rows, index = ns.clusterfiles)
 summary.to_csv(ns.outfile)

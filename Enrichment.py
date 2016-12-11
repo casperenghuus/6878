@@ -19,7 +19,7 @@ ns = parser.parse_args()
 t0 = time.time()
 # Read in nodes file
 with open(ns.nodes) as nodeFile:
-    cu.loadNodes(nodeFile)
+    nc = cu.loadNodes(nodeFile)
 
 # Read in database files
 dbFolder = ns.dbfolder
@@ -32,7 +32,7 @@ dbdf = pd.DataFrame()
 for dbFname in dbFnames:
     df = pd.read_csv(dbFname)
     dbdf = dbdf.append(df[['V1', 'V2']])
-confEdges = cu.convertToTuples(dbdf)
+confEdges = cu.convertToTuples(dbdf, nc)
 confNodes = set(dbdf.iloc[:,0].append(dbdf.iloc[:,1]))
 
 linksizes = []
@@ -47,8 +47,8 @@ for i in range(10):
     try:
         df = pd.read_csv(expFname, header = None, delimiter = ' ')
         df = df.iloc[:,0:2]
-        df = cu.convertToNodes(df)
-        expEdges = set(cu.convertToTuples(df))
+        df = cu.convertToNodes(df, nc)
+        expEdges = set(cu.convertToTuples(df, nc))
         expNodes = set(df.iloc[:,0].append(df.iloc[:,1]))
     
         p = cu.enrichmentTest(confNodes, confEdges, expNodes, expEdges)

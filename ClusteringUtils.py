@@ -8,12 +8,21 @@ import itertools
 import pandas as pd
 import os
 
-ind2node = {}
-node2ind = {}
+class NodeConversion:
+    nodes = []
+    ind2node = {}
+    node2ind = {}
+    
+    def __init__(self, ind2node, node2ind, nodes):
+        self.ind2node = ind2node
+        self.node2ind = node2ind
+        self.nodes = nodes
 
 def loadNodes(nodeFile):
-    global ind2node, node2ind
+    # global ind2node, node2ind
     nodes = []
+    ind2node = {}
+    node2ind = {}
     """ Load node indices in nodes.txt file """
     i = 1
     for line in nodeFile:
@@ -24,21 +33,21 @@ def loadNodes(nodeFile):
             node2ind[line_s] = i
             nodes.append(line_s)
         i += 1
-    return nodes
+    return NodeConversion(ind2node, node2ind, nodes)
 
-def convertToNodes(df):
+def convertToNodes(df, nc):
     """ Convert string entries in data frame to indices """
     if isinstance(df, pd.DataFrame):
-        return df.applymap(lambda x: ind2node[x])
+        return df.applymap(lambda x: nc.ind2node[x])
     else:
-        return map(lambda x: ind2node[int(x)], df)
+        return map(lambda x: nc.ind2node[int(x)], df)
 
 def convertToInds(df):
     """ Convert indices in data frame to strings """
     if isinstance(df, pd.DataFrame):
-        return df.applymap(lambda x: node2ind[x])
+        return df.applymap(lambda x: nc.node2ind[x])
     else:
-        return map(lambda x: node2ind[x], df)
+        return map(lambda x: nc.node2ind[x], df)
 
 def sortedTuples(s):
     """ Sort the tuples in the given set """
@@ -169,8 +178,8 @@ def readMSig(prefix, files):
 
     return ret
 
-def comms2nodes(clusters):
-    return [convertToNodes(c) for c in clusters]
+def comms2nodes(clusters, nc):
+    return [convertToNodes(c, nc) for c in clusters]
 
 def clusterToInd(g, c):
     ret = []
@@ -203,7 +212,7 @@ def conductance(g, c):
     # else:
     #     cond = intra_w/min(inter_c_w, inter_comp_w) 
     else:
-        cond = float(intra_w)/(2*intra_w + inter_c_w)
+        cond = float(intra_w)/(intra_w + 2*inter_c_w)
     return cond
 
 def spAdjMat(graph):
