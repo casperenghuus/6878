@@ -45,6 +45,7 @@ def build_matrix(args):
     M = None
 
     for s in args.slices:
+        print s
         nResults = 0 # Track number of results
         try:
             for p in args.paths[s]:
@@ -61,9 +62,9 @@ def build_matrix(args):
                     nResults += 1
                     if nResults == int(args.results):
                         break
-
         except KeyError, e:
             print '%s not a valid slice'%e
+        print M.shape
 
     return M, int(np.median(map(int, CL)))
 
@@ -105,7 +106,7 @@ def tp_to_col(p, args, clusterLengths):
     modules = {}
 
     # Regex to capture module information
-    s = re.compile('module\s+(\d+)\s+size:\s+(\d+)\s+bs:\s+(\d+\.{0,1}\d*)')
+    s = re.compile('module\s+(\d+)\s+size:\s+(\d+)\s+bs:\s+(.*)')
 
     # Read tp file into dict holding cluster information
     with open(p, 'r') as fh:
@@ -322,17 +323,23 @@ if __name__=='__main__':
         args.slices = args.paths.keys()
 
     # BUILD MATRIX
+    print 'Build Matrix'
     args.M, nClusters = build_matrix(args)
 
     if args.nClusters is None:
         args.nClusters = nClusters
+    print 'Clusters used = %i'%args.nClusters
+
 
     # CLUSTERING
+    print 'Clustering'
+    print 'Dimensions =', args.M.shape
     cc_model, cc_fit = Spectral_CoClustering(args)
     bc_model, bc_fit = Spectral_BiClustering(args.M.T, args)
 
     # Plot co-clusters
     if args.plot:
+        print 'Plotting'
         plot_spectral(args.M, args.pOrigName + 'no_clustering', args,
             'M: Before Clustering')
         plot_spectral(cc_fit, args.pCluName + 'CoClustering', args,
@@ -341,8 +348,6 @@ if __name__=='__main__':
         plot_spectral(bc_fit.T, args.pCluName + 'BiClustering', args,
             '\n'.join(['M: After BiClustering; rearranged to show BiClusters',
                       '{n} clusters used'.format(n=args.nClusters)]))
-
-    print 'Clusters used = %i'%args.nClusters
 
 
 
