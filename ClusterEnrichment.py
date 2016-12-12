@@ -68,6 +68,7 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
     clusters_nodes = cu.comms2nodes(clusters, nc)
     
     ps = {dbname: np.zeros((len(clusters_nodes), len(db[dbname]))) for dbname in db.keys()}
+    intersection_size = {dbname: np.zeros((len(clusters_nodes), len(db[dbname]))) for dbname in db.keys()}
     conductances = np.zeros((len(clusters_nodes), len(gs)))
     # ps = np.zeros((len(clusters), len(db)))
     
@@ -108,12 +109,14 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
                 verified = len(dgenes)
                 size = len(c_set)
                 ps[dbname][i, j] = min(stats.hypergeom.sf(enriched - 1, gene_count, verified, size) * total_length, 1)
+                intersection_size[dbname][i, j] = enriched
 
             # Filter for most significant hit
             min_ind = np.argmin(ps[dbname][i, :])
             if ps[dbname][i, min_ind] < 1:
                 most_sig[dbname + ' entry'] = dbcontent.keys()[min_ind]
                 most_sig[dbname + ' p'] = ps[dbname][i, min_ind]
+                most_sig[dbname + ' intersect'] = intersection_size[dbname][i, min_ind]
                 most_sig[dbname + ' sig'] = ps[dbname][i, min_ind] < most_sig['threshold']
 
         most_sigs.append(most_sig)
