@@ -265,7 +265,7 @@ def plot_spectral(data, fout, args, title):
     # Heatmap
     # sns.heatmap(data, xticklabels=[], yticklabels=[])
     # Spy plot
-    plt.spy(data, markersize = 1.5)
+    plt.spy(data, markersize = 0.5)
 
     # Annotations
     plt.title(title)
