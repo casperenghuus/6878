@@ -260,7 +260,7 @@ def plot_spectral(data, fout, args, title):
 
     print('Plotting')
     # Set figure size
-    plt.figure(figsize=args.psize)
+    # plt.figure(figsize=args.psize)
 
     # Heatmap
     # sns.heatmap(data, xticklabels=[], yticklabels=[])
