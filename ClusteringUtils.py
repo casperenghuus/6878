@@ -127,7 +127,7 @@ def ncol2metis(infile, metisfile, nodefile, prefactor = 1e5):
             seq = itertools.chain.from_iterable(zip(neighbor_inds, edge_weights))
             f.write(' '.join(seq) + '\n')
 
-def readComms(fname):
+def readComms(fname, keep_singletons = True):
     membership = {}
     clusters = []
     counter = 0
@@ -136,12 +136,14 @@ def readComms(fname):
             line = line.strip()
             if not line.startswith('#') and len(line) > 0:
                 cluster = []
-                clusters.append(cluster)
                 for node in line.split(' '):
                     if not node.startswith('slice'):
-                        membership[node] = counter
                         cluster.append(node)
-                counter += 1
+                if (len(cluster) > 0 and keep_singletons) or len(cluster) > 1:
+                    clusters.append(cluster)
+                    for node in cluster:
+                        membership[node] = counter
+                    counter += 1
     return (membership, clusters)
 
 def addSingletonClusters(memb, clusters, nodes):

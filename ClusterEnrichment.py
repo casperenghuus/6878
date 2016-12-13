@@ -60,8 +60,10 @@ t_interp = interp.InterpolatedUnivariateSpline(t_lengths, t_cutoffs_log, k = 1)
 # for (k, clusterfile) in enumerate(ns.clusterfiles):
 def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene_count, nodes):
     print('File: {}'.format(clusterfile))
-    (memb, clusters) = cu.readComms(clusterfile)
-    (memb, clusters) = cu.addSingletonClusters(memb, clusters, nodes)
+    # (memb, clusters) = cu.readComms(clusterfile)
+    # Throw away length one communities
+    (memb, clusters) = cu.readComms(clusterfile, keep_singletons = False)
+    # (memb, clusters) = cu.addSingletonClusters(memb, clusters, nodes)
     # Throw away slice nodes
     clusters = [c for c in clusters if len(c) > 0]
     
@@ -87,10 +89,15 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
     thresholds = np.exp(t_interp(cluster_lengths))
 
     # Modularity
+    gs_new = []
     for (j, g) in enumerate(gs):
         for v in g.vs:
-            v['cluster'] = memb[v['name']]
+            v['cluster'] = memb.get(v['name'], -1)
+        clustered_verts = g.vs.select(cluster_ge = 0)
+        g_new = g.subgraph(clustered_verts)
+        gs_new.append(g_new)
         # vc = ig.VertexClustering.FromAttribute(g, 'cluster',)
+    for (j, g) in enumerate(gs_new):
         summary_row['modularity ' + ns.graphs[j]] = g.modularity(g.vs['cluster'], weights = g.es['weight'] if g.is_weighted() else None)
 
     most_sigs = []
@@ -122,11 +129,11 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
         most_sigs.append(most_sig)
 
         # Conductances
-        for (j, g) in enumerate(gs):
+        for (j, g) in enumerate(gs_new):
             conductances[i, j] = cu.conductance(g, c)
 
     summary_row.update({dbname: np.mean(np.logical_and(ps[dbname].min(1) < thresholds, cluster_lengths > 1)) for dbname in db.keys()})
-    for (j, g) in enumerate(gs):
+    for (j, g) in enumerate(gs_new):
         summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
         summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
         summary_row['conductance mean ' + ns.graphs[j]] = conductances[:,j].mean()
