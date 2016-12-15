@@ -129,20 +129,20 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
         most_sigs.append(most_sig)
 
         # Conductances
-        for (j, g) in enumerate(gs_new):
-            conductances[i, j] = cu.conductance(g, c)
+        # for (j, g) in enumerate(gs_new):
+        #     conductances[i, j] = cu.conductance(g, c)
 
     summary_row.update({dbname: np.mean(np.logical_and(ps[dbname].min(1) < thresholds, cluster_lengths > 1)) for dbname in db.keys()})
-    for (j, g) in enumerate(gs_new):
-        summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
-        summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
-        summary_row['conductance mean ' + ns.graphs[j]] = conductances[:,j].mean()
-        summary_row['conductance median ' + ns.graphs[j]] = np.median(conductances[:,j])
+    # for (j, g) in enumerate(gs_new):
+    #     summary_row['conductance min ' + ns.graphs[j]] = conductances[:,j].min()
+    #     summary_row['conductance max ' + ns.graphs[j]] = conductances[:,j].max()
+    #     summary_row['conductance mean ' + ns.graphs[j]] = conductances[:,j].mean()
+    #     summary_row['conductance median ' + ns.graphs[j]] = np.median(conductances[:,j])
     
     all_ps = np.concatenate(ps.values(), axis = 1)
-    all_vals = np.concatenate([all_ps, conductances], axis = 1)
+    # all_vals = np.concatenate([all_ps, conductances], axis = 1)
     all_labels = [key for dbcontent in db.values() for key in dbcontent.keys()]
-    all_labels.extend(['conductance ' + g for g in ns.graphs])
+    # all_labels.extend(['conductance ' + g for g in ns.graphs])
     df = pd.DataFrame(all_vals, columns = all_labels)
     basename = os.path.splitext(clusterfile)[0]
     df.to_csv(basename + '_enr.csv')
