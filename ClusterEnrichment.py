@@ -141,6 +141,7 @@ def analyze(k, clusterfile, nc, db, thresholds, t_interp, gs, total_length, gene
     
     all_ps = np.concatenate(ps.values(), axis = 1)
     # all_vals = np.concatenate([all_ps, conductances], axis = 1)
+    all_vals = all_ps
     all_labels = [key for dbcontent in db.values() for key in dbcontent.keys()]
     # all_labels.extend(['conductance ' + g for g in ns.graphs])
     df = pd.DataFrame(all_vals, columns = all_labels)
